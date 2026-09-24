@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RMS — Interactive UI Prototype</title>
+<style>
+  :root{
+    --green:#0B6F4B; --green-d:#095c3e; --teal:#0e9f8a;
+    --bg:#f2f5f3; --card:#ffffff; --ink:#12211a; --muted:#6b7d74;
+    --line:#e3eae6; --danger:#c0392b; --amber:#b7791f;
+    --radius:14px;
+  }
+  body.dark{ --bg:#0f1512; --card:#18211c; --ink:#e8f0eb; --muted:#93a79b; --line:#26332c; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:#0c0f0d; color:var(--ink); min-height:100dvh;
+    display:flex; align-items:center; justify-content:center; padding:12px;
+  }
+  .phone{
+    width:402px; max-width:100%; height:min(880px,96dvh); background:var(--bg);
+    border-radius:34px; overflow:hidden; position:relative;
+    box-shadow:0 30px 80px rgba(0,0,0,.55); display:flex; flex-direction:column;
+    border:10px solid #1b1f1c;
+  }
+  @media (max-width:480px){
+    body{padding:0;} .phone{width:100%;height:100dvh;border-radius:0;border:none;}
+  }
+  .screen{display:none; flex-direction:column; height:100%; overflow:hidden;}
+  .screen.active{display:flex;}
+  .body{flex:1; overflow-y:auto; padding:14px 14px 90px;}
+  .topbar{
+    display:flex; align-items:center; gap:10px; padding:14px;
+    background:var(--card); border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .topbar h1{font-size:17px; margin:0; flex:1;}
+  .back{border:none;background:var(--bg);color:var(--ink);width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;}
+  .iconbtn{border:none;background:var(--bg);color:var(--ink);min-width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;padding:0 8px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:12px;}
+  .row{display:flex; align-items:center; gap:12px;}
+  .prop{cursor:pointer; transition:transform .08s;}
+  .prop:active{transform:scale(.985);}
+  .prop .meta{flex:1;}
+  .prop .nm{font-weight:700; font-size:16px;}
+  .badge{font-size:11px; background:#e7f4ee; color:var(--green); border-radius:20px; padding:3px 10px; font-weight:700;}
+  body.dark .badge{background:#123528;}
+  .due{color:var(--danger); font-weight:700; font-size:14px;}
+  .ok{color:var(--green); font-weight:700; font-size:14px;}
+  .muted{color:var(--muted); font-size:13px;}
+  .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0;}
+  .btn{
+    display:block; width:100%; border:none; cursor:pointer; border-radius:14px;
+    padding:15px; font-size:16px; font-weight:700; margin-top:10px; min-height:48px;
+  }
+  .btn-p{background:var(--green); color:#fff;}
+  .btn-p:active{background:var(--green-d);}
+  .btn-s{background:var(--bg); color:var(--ink); border:1px solid var(--line);}
+  .btnrow{display:flex; gap:10px;} .btnrow .btn{margin-top:0;}
+  label.f{display:block; font-size:13px; font-weight:700; color:var(--muted); margin:12px 0 6px;}
+  input[type=text],input[type=number],input[type=password],input[type=tel],select{
+    width:100%; padding:13px 12px; font-size:16px; border-radius:12px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+  }
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+  .chip{border:1.5px solid var(--line); background:var(--card); color:var(--ink); border-radius:20px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px;}
+  .chip.on{background:var(--green); border-color:var(--green); color:#fff;}
+  .toggle{position:relative; width:52px; height:30px; background:#cfd8d3; border-radius:20px; cursor:pointer; flex-shrink:0; border:none;}
+  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; background:#fff; border-radius:50%; transition:left .15s;}
+  .toggle.on{background:var(--green);} .toggle.on::after{left:25px;}
+  .steps{display:flex; gap:6px; margin:10px 0 2px;}
+  .steps i{flex:1; height:5px; border-radius:4px; background:var(--line);}
+  .steps i.done{background:var(--green);}
+  .stepTag{font-size:12px; color:var(--muted); font-weight:700;}
+  .bill{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; font-size:16px;}
+  .bill .h{font-weight:800; font-size:18px; margin-bottom:10px;}
+  .bill .ln{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px dashed var(--line);}
+  .bill .ln span:last-child{font-variant-numeric:tabular-nums; font-weight:600;}
+  .bill .tot{display:flex; justify-content:space-between; padding:12px 0 2px; font-size:19px; font-weight:800;}
+  .neg{color:var(--danger);}
+  .tabs{display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:4px; margin-bottom:12px;}
+  .tabs button{flex:1; border:none; background:transparent; color:var(--muted); font-weight:700; font-size:14px; padding:11px; border-radius:10px; cursor:pointer;}
+  .tabs button.on{background:var(--green); color:#fff;}
+  .bar{height:8px; background:var(--line); border-radius:6px; overflow:hidden; margin-top:8px;}
+  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--green)); border-radius:6px;}
+  .setrow{display:flex; align-items:center; gap:12px; padding:14px 2px; border-bottom:1px solid var(--line); cursor:pointer;}
+  .setrow:last-child{border-bottom:none;}
+  .setrow .t{flex:1;} .setrow .t b{display:block; font-size:15px;} .setrow .t small{color:var(--muted); font-size:12px;}
+  .bottomnav{
+    position:absolute; bottom:0; left:0; right:0; display:flex; background:var(--card);
+    border-top:1px solid var(--line); padding:8px 4px calc(10px + env(safe-area-inset-bottom)); z-index:5;
+  }
+  .bottomnav button{flex:1; border:none; background:none; color:var(--muted); font-size:11px; font-weight:700; padding:8px; cursor:pointer; border-radius:10px;}
+  .bottomnav button .e{font-size:20px; display:block;}
+  .bottomnav button.on{color:var(--green);}
+  .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--teal),var(--green));display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;font-weight:800;margin:26px auto 8px;}
+  .center{text-align:center;}
+  .sample{font-size:11px; color:var(--muted); text-align:center; margin:2px 0 10px;}
+  .chk{display:flex; align-items:center; gap:10px; font-weight:700; font-size:15px; cursor:pointer; padding:6px 0;}
+  .chk input{width:22px; height:22px; accent-color:var(--green);}
+  .photoBtn{border:1.5px dashed var(--line); background:var(--card); color:var(--muted); border-radius:12px; padding:11px 14px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;}
+  .readrow{display:flex; gap:8px; align-items:center; margin-top:8px;}
+  .readrow input{flex:1;}
+  .toast{
+    position:absolute; left:50%; bottom:92px; transform:translateX(-50%) translateY(20px);
+    background:#12211a; color:#fff; padding:12px 20px; border-radius:30px; font-size:14px; font-weight:600;
+    opacity:0; transition:all .25s; pointer-events:none; z-index:20; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .hl{border-left:4px solid var(--amber); padding-left:10px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+
+  <!-- ============ 1. LOGIN ============ -->
+  <section class="screen active" id="scr-login">
+    <div class="body" style="padding-bottom:20px">
+      <div class="logo">R</div>
+      <h2 class="center" style="margin:4px 0 2px">RMS</h2>
+      <p class="center muted" style="margin:0 0 18px">Renter Management System</p>
+      <div class="card">
+        <label class="f" style="margin-top:0">Email / Phone</label>
+        <input type="tel" placeholder="03xx xxxxxxx">
+        <label class="f">Password</label>
+        <input type="password" placeholder="••••••••">
+        <button class="btn btn-p" onclick="go('scr-properties')">Login</button>
+        <button class="btn btn-s" onclick="go('scr-properties')">Sign up</button>
+        <button class="btn btn-s" onclick="go('scr-properties');toast('Local mode — sync disabled')" style="border-style:dashed">Skip for now →</button>
+      </div>
+      <p class="center"><a href="#" class="muted" style="font-size:13px" onclick="toast('Reset link sent');return false">Forgot password?</a></p>
+    </div>
+  </section>
+
+  <!-- ============ 2. PROPERTIES ============ -->
+  <section class="screen" id="scr-properties">
+    <div class="topbar"><h1>Properties</h1><button class="iconbtn" onclick="wizStart()">＋</button></div>
+    <div class="body">
+      <p class="sample">INTERACTIVE PROTOTYPE · sample data · tap a card</p>
+      <div class="card prop" onclick="go('scr-houses')">
+        <div class="row"><div class="meta"><span class="nm">R-15</span> <span class="badge">Apartment</span><div class="muted">3 floors · 12 houses</div></div><div class="due">Rs 45,000 due</div></div>
+      </div>
+      <div class="card prop" onclick="toast('Sample — R-09 houses')">
+        <div class="row"><div class="meta"><span class="nm">R-09</span> <span class="badge">Apartment</span><div class="muted">2 floors · 8 houses</div></div><div class="due">Rs 12,300 due</div></div>
+      </div>
+      <div class="card prop" onclick="toast('Sample — B-170 houses')">
+        <div class="row"><div class="meta"><span class="nm">B-170</span> <span class="badge">Shop</span><div class="muted">1 floor · 3 shops</div></div><div class="ok">All paid ✓</div></div>
+      </div>
+    </div>
+    <nav class="bottomnav">
+      <button class="on"><span class="e">🏠</span>Properties</button>
+      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
+      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
+    </nav>
+  </section>
+
+  <!-- ============ 3. REGISTER WIZARD ============ -->
+  <section class="screen" id="scr-wiz">
+    <div class="topbar"><button class="back" onclick="wizBack()">‹</button><h1>Register Property</h1></div>
+    <div class="body">
+      <div class="stepTag" id="wizTag">Step 1 of 7 · Type & basics</div>
+      <div class="steps" id="wizDots"><i class="done"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+      <div class="wizstep" id="w1">
+        <label class="f">Kya register kar rahe hain?</label>
+        <div class="chips" id="typeChips">
+          <button class="chip on" onclick="chipSingle(this)">Apartment</button>
+          <button class="chip" onclick="chipSingle(this)">Shop</button>
+          <button class="chip" onclick="chipSingle(this)">Other</button>
+        </div>
+        <label class="f">Naam</label><input type="text" placeholder="e.g. R-15" value="R-15">
+        <div class="btnrow" style="margin-top:12px">
+          <div style="flex:1"><label class="f" style="margin-top:0">Floors</label><input type="number" value="3"></div>
+          <div style="flex:1"><label class="f" style="margin-top:0">Houses / floor</label><input type="number" value="4"></div>
+        </div>
+      </div>
+
+      <div class="wizstep hidden" id="w2">
+        <label class="f">Sub-meters installed?</label>
+        <div class="card"><div class="row"><div class="meta"><b>Bijli sub-meters</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div></div>
+        <div class="card"><div class="row"><div class="meta"><b>Gas sub-meters</b></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div></div>
+        <label class="f">Sub-meter numbers (printed on meter)</label>
+        <input type="text" placeholder="KE sub-meter #1 number" style="margin-bottom:8px">
+        <input type="text" placeholder="KE sub-meter #2 number">
+      </div>
+
+      <div class="wizstep hidden" id="w3">
+        <p class="muted" style="font-size:13px">Official account numbers — future me <b>auto bill fetch</b> inhi par hoga.</p>
+        <label class="f">KE account number(s)</label>
+        <input type="text" placeholder="e.g. 0400012345678" style="margin-bottom:8px">
+        <input type="text" placeholder="+ add another">
+        <label class="f">SSGC customer number(s)</label>
+        <input type="text" placeholder="e.g. 1234567890">
+      </div>
+
+      <div class="wizstep hidden" id="w4">
+        <p class="muted" style="font-size:13px">Main meters — jinke behalf par bill fetch hoga.</p>
+        <label class="f">Main gas meter(s)</label>
+        <input type="text" placeholder="Meter label / number" style="margin-bottom:8px">
+        <label class="f">Main electricity meter(s)</label>
+        <input type="text" placeholder="Meter label / number">
+      </div>
+
+      <div class="wizstep hidden" id="w5">
+        <p class="muted" style="font-size:13px"><b>Ye meter kis ghar ke liye hai?</b> — multi-select (ek meter multiple gharon ke liye ho sakta hai).</p>
+        <label class="f">Main KE meter → houses</label>
+        <div class="chips">
+          <button class="chip on" onclick="this.classList.toggle('on')">A-01</button>
+          <button class="chip on" onclick="this.classList.toggle('on')">A-02</button>
+          <button class="chip" onclick="this.classList.toggle('on')">A-03</button>
+          <button class="chip" onclick="this.classList.toggle('on')">A-04</button>
+        </div>
+        <label class="f">Main gas meter → houses</label>
+        <div class="chips">
+          <button class="chip on" onclick="this.classList.toggle('on')">A-01</button>
+          <button class="chip" onclick="this.classList.toggle('on')">A-02</button>
+          <button class="chip" onclick="this.classList.toggle('on')">A-03</button>
+        </div>
+      </div>
+
+      <div class="wizstep hidden" id="w6">
+        <label class="f">Maintenance & extra charges</label>
+        <div class="card">
+          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Security charges</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <input type="number" placeholder="Rs / month" value="500">
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Water charges</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <input type="number" placeholder="Rs / month" value="300">
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Maintenance</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <input type="number" placeholder="Rs / month" value="150">
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Motor charges</b></div></div>
+          <div class="chips"><button class="chip on" onclick="chipSingle(this)">Fixed</button><button class="chip" onclick="chipSingle(this)">Variable</button></div>
+          <input type="number" placeholder="Rs / month" value="250" style="margin-top:8px">
+        </div>
+      </div>
+
+      <div class="wizstep hidden" id="w7">
+        <label class="f">Bill splitting — "how that works"</label>
+        <div class="card"><b>Electricity bill split</b>
+          <div class="chips"><button class="chip" onclick="chipSingle(this)">Equally</button><button class="chip on" onclick="chipSingle(this)">Sub-meter reading</button><button class="chip" onclick="chipSingle(this)">By persons</button></div>
+        </div>
+        <div class="card"><b>Gas bill split</b>
+          <div class="chips"><button class="chip on" onclick="chipSingle(this)">Equally</button><button class="chip" onclick="chipSingle(this)">Sub-meter reading</button><button class="chip" onclick="chipSingle(this)">By persons</button></div>
+        </div>
+      </div>
+
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn btn-s" id="wizBackBtn" onclick="wizBack()">Back</button>
+        <button class="btn btn-p" id="wizNextBtn" onclick="wizNext()">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. HOUSES ============ -->
+  <section class="screen" id="scr-houses">
+    <div class="topbar"><button class="back" onclick="go('scr-properties')">‹</button><h1>R-15 · Houses</h1><button class="iconbtn">＋</button></div>
+    <div class="body">
+      <div class="card prop" onclick="go('scr-sheet')">
+        <div class="row"><div class="avatar">MA</div>
+          <div class="meta"><span class="nm">Mohsin Ali</span> <span class="muted">· B02</span><div class="muted">4 persons</div></div>
+          <div class="due">Rs 3,032 due</div></div>
+      </div>
+      <div class="card prop" onclick="toast('Sample house sheet')">
+        <div class="row"><div class="avatar" style="background:linear-gradient(135deg,#7c5cd6,#4a2fa0)">AK</div>
+          <div class="meta"><span class="nm">Ahmed Khan</span> <span class="muted">· A-01</span><div class="muted">3 persons</div></div>
+          <div class="ok">Paid ✓</div></div>
+      </div>
+      <div class="card prop" onclick="toast('Sample house sheet')">
+        <div class="row"><div class="avatar" style="background:linear-gradient(135deg,#d68a2c,#a05a1a)">SR</div>
+          <div class="meta"><span class="nm">Sara Raza</span> <span class="muted">· A-03</span><div class="muted">2 persons</div></div>
+          <div class="due">Rs 8,200 due</div></div>
+      </div>
+    </div>
+    <nav class="bottomnav">
+      <button class="on" onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
+      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
+      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
+    </nav>
+  </section>
+
+  <!-- ============ 5. HOUSE SHEET ============ -->
+  <section class="screen" id="scr-sheet">
+    <div class="topbar"><button class="back" onclick="go('scr-houses')">‹</button><h1>Mohsin Ali · B02</h1></div>
+    <div class="body">
+      <div class="card"><div class="row" style="justify-content:center">
+        <button class="iconbtn">‹</button><b>Sep 2026</b><button class="iconbtn">›</button>
+      </div></div>
+      <div class="card">
+        <label class="f" style="margin-top:0">Monthly Rent (Rs)</label><input type="number" value="0">
+        <label class="f">Adv of lease (Rs)</label><input type="number" placeholder="Advance held">
+        <label class="f">No. of Persons</label><input type="number" value="4">
+        <label class="f">Past Dues / Outstanding (Rs)</label>
+        <div class="hl"><input type="number" value="0"></div>
+      </div>
+      <div class="card">
+        <button class="btn btn-s" onclick="toast('Agreement viewer')">View / Add Agreement</button>
+        <button class="btn btn-s" onclick="toast('CNIC viewer')">View / Add CNIC</button>
+        <button class="btn btn-s" onclick="toast('Job cards')">Job Card</button>
+      </div>
+      <div class="card">
+        <b>Readings</b>
+        <div class="readrow"><input type="number" placeholder="KE sub-meter reading"><button class="photoBtn" onclick="toast('Gallery → meter photo attached')">📷</button></div>
+        <div class="readrow"><input type="number" placeholder="Gas sub-meter reading"><button class="photoBtn" onclick="toast('Gallery → meter photo attached')">📷</button></div>
+      </div>
+      <div class="card">
+        <label class="chk"><input type="checkbox" checked> This month charges</label>
+        <button class="btn btn-p" onclick="go('scr-bill')">Generate →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. BILL ============ -->
+  <section class="screen" id="scr-bill">
+    <div class="topbar"><button class="back" onclick="go('scr-sheet')">‹</button><h1>Bill · Sep 2026</h1></div>
+    <div class="body">
+      <div class="bill">
+        <div class="h">Mohsin Ali B02</div>
+        <div class="ln"><span>KE bill</span><span>2590</span></div>
+        <div class="ln"><span>Motor bill</span><span>250</span></div>
+        <div class="ln"><span>Gas bill</span><span>410</span></div>
+        <div class="ln"><span>Maintenance</span><span>150</span></div>
+        <div class="ln"><span>Prev extra</span><span class="neg">- 368</span></div>
+        <div class="tot"><span>Total</span><span>3032</span></div>
+      </div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn btn-p" onclick="toast('Opening WhatsApp share…')">WhatsApp</button>
+        <button class="btn btn-s" onclick="toast('PDF exported')">PDF</button>
+      </div>
+      <button class="btn btn-s" onclick="toast('Marked paid — dues cleared')">Mark paid</button>
+      <p class="muted center" style="font-size:12px;margin-top:10px">Template format — lines dynamic per house</p>
+    </div>
+  </section>
+
+  <!-- ============ 7. COLLECTION ============ -->
+  <section class="screen" id="scr-collection">
+    <div class="topbar"><h1>Collection · Sep 2026</h1></div>
+    <div class="body">
+      <div class="tabs">
+        <button class="on" id="tabB" onclick="ctab('b')">Building-wise</button>
+        <button id="tabH" onclick="ctab('h')">House-wise</button>
+      </div>
+      <div id="cB">
+        <div class="card"><div class="row"><div class="meta"><b>R-15</b><div class="muted">Expected 1,20,000 · Collected 80,000</div><div class="bar"><i style="width:67%"></i></div></div><div class="due">40,000 pending</div></div></div>
+        <div class="card"><div class="row"><div class="meta"><b>R-09</b><div class="muted">Expected 64,000 · Collected 51,700</div><div class="bar"><i style="width:81%"></i></div></div><div class="due">12,300 pending</div></div></div>
+        <div class="card"><div class="row"><div class="meta"><b>B-170</b><div class="muted">Expected 30,000 · Collected 30,000</div><div class="bar"><i style="width:100%"></i></div></div><div class="ok">Done ✓</div></div></div>
+        <div class="card"><div class="row"><div class="meta"><b>TOTAL</b></div></div><div class="row" style="margin-top:6px"><span class="muted">Collected</span><b>1,61,700</b></div><div class="row"><span class="muted">Pending</span><b class="due">52,300</b></div></div>
+      </div>
+      <div id="cH" class="hidden">
+        <div class="card"><div class="row"><div class="avatar">MA</div><div class="meta"><b>Mohsin Ali · B02</b><div class="muted">R-15</div></div><div class="due">3,032 due</div></div></div>
+        <div class="card"><div class="row"><div class="avatar" style="background:linear-gradient(135deg,#7c5cd6,#4a2fa0)">AK</div><div class="meta"><b>Ahmed Khan · A-01</b><div class="muted">R-15</div></div><div class="ok">Paid ✓</div></div></div>
+        <div class="card"><div class="row"><div class="avatar" style="background:linear-gradient(135deg,#d68a2c,#a05a1a)">SR</div><div class="meta"><b>Sara Raza · A-03</b><div class="muted">R-15</div></div><div class="due">8,200 due</div></div></div>
+      </div>
+    </div>
+    <nav class="bottomnav">
+      <button onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
+      <button class="on"><span class="e">📊</span>Collection</button>
+      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
+    </nav>
+  </section>
+
+  <!-- ============ 8. SETTINGS ============ -->
+  <section class="screen" id="scr-settings">
+    <div class="topbar"><h1>Settings</h1></div>
+    <div class="body">
+      <div class="card">
+        <div class="setrow"><div class="t"><b>Dark mode</b></div><button class="toggle" id="darkT" onclick="document.body.classList.toggle('dark');this.classList.toggle('on')"></button></div>
+        <div class="setrow" onclick="toast('Language: English / اردو')"><div class="t"><b>Language</b><small>English</small></div><span class="muted">›</span></div>
+        <div class="setrow" onclick="toast('Checking for updates…')"><div class="t"><b>Check for update</b><small>v3.0 prototype</small></div><span class="muted">›</span></div>
+        <div class="setrow" onclick="toast('Exporting backup…')"><div class="t"><b>Export app data</b><small>Local JSON backup</small></div><span class="muted">›</span></div>
+        <div class="setrow" onclick="toast('Importing backup…')"><div class="t"><b>Import app data</b><small>Restore from file</small></div><span class="muted">›</span></div>
+      </div>
+      <div class="card">
+        <div class="setrow"><div class="t"><b>Sync data (Supabase)</b><small id="syncLbl">Last synced: 2 min ago · auto every 1 min</small></div></div>
+        <button class="btn btn-p" onclick="document.getElementById('syncLbl').textContent='Last synced: just now · auto every 1 min';toast('Synced ✓')">Sync now</button>
+      </div>
+    </div>
+    <nav class="bottomnav">
+      <button onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
+      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
+      <button class="on"><span class="e">⚙️</span>Settings</button>
+    </nav>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById(id).querySelector('.body').scrollTop = 0;
+  }
+  let toastT;
+  function toast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+  // wizard
+  const wNames=["Step 1 of 7 · Type & basics","Step 2 of 7 · Sub-meters","Step 3 of 7 · Official accounts","Step 4 of 7 · Main meters","Step 5 of 7 · Meter → house mapping","Step 6 of 7 · Maintenance charges","Step 7 of 7 · Splitting rules"];
+  let wStep=1;
+  function wizStart(){ wStep=1; wizRender(); go('scr-wiz'); }
+  function wizRender(){
+    for(let i=1;i<=7;i++) document.getElementById('w'+i).classList.toggle('hidden', i!==wStep);
+    document.getElementById('wizTag').textContent=wNames[wStep-1];
+    [...document.getElementById('wizDots').children].forEach((d,i)=>d.classList.toggle('done', i<wStep));
+    document.getElementById('wizBackBtn').style.visibility = wStep===1 ? 'hidden' : 'visible';
+    document.getElementById('wizNextBtn').textContent = wStep===7 ? 'Finish ✓' : 'Next →';
+  }
+  function wizNext(){
+    if(wStep<7){ wStep++; wizRender(); }
+    else { go('scr-properties'); toast('Property registered ✓'); }
+  }
+  function wizBack(){
+    if(wStep>1){ wStep--; wizRender(); } else go('scr-properties');
+  }
+  function chipSingle(el){
+    [...el.parentElement.children].forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+  }
+  function ctab(which){
+    const b = which==='b';
+    document.getElementById('tabB').classList.toggle('on',b);
+    document.getElementById('tabH').classList.toggle('on',!b);
+    document.getElementById('cB').classList.toggle('hidden',!b);
+    document.getElementById('cH').classList.toggle('hidden',b);
+  }
+</script>
+</body>
+</html>
