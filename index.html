@@ -78,7 +78,7 @@ h2.stitle{font-size:16px;margin:0 0 4px}
 const S = {
   screen:'login', tab:'home',
   lang:'en',
-  prop:null, houses:[], bills:{},
+  prop:null, houses:[], bills:{}, past:[], _prSt:'paid',
   wz:{step:1}, collTab:'bld', collMonth:'Sep 2026',
   lastSync:null, seq:1
 };
@@ -115,7 +115,8 @@ function enterApp(){S.screen='main';S.tab='home';render();}
 /* ---------- MAIN SHELL ---------- */
 function shell(inner){
   const nav=[['home','🏢',T('home')],['houses','🚪',T('houses')],['coll','🧾',T('coll')],['set','⚙️',T('set')]];
-  return `<div class="hdr"><h1>${T('app')}</h1><button class="icobtn" onclick="tab('set')" title="${T('set')}">⚙️</button></div>
+  const gear=(S.screen==='main'&&S.tab==='set')?'':`<button class="icobtn" onclick="tab('set')" title="${T('set')}">⚙️</button>`;
+  return `<div class="hdr"><h1>${T('app')}</h1>${gear}</div>
   <div class="body">${inner}</div>
   <div class="nav">${nav.map(n=>`<button class="${S.tab===n[0]?'on':''}" onclick="tab('${n[0]}')"><span class="ic">${n[1]}</span>${n[2]}</button>`).join('')}</div>`;
 }
@@ -137,7 +138,7 @@ function vHome(){
 </html>
 <script>
 /* ================= REGISTRATION WIZARD (9 steps, English labels) ================= */
-function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};go('wizard');}
+function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],motorMeter:{no:'',type:'none'},charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};go('wizard');}
 function wzDots(n,cur){let s='<div class="stepdots">';for(let i=1;i<=n;i++)s+=`<span class="${i<=cur?'done':''}"></span>`;return s+'</div>';}
 function wzBar(title,step){return `<div class="hdr"><button class="back" onclick="wzBack()">←</button><h1>${title}</h1><div class="mut">Step ${step}/9</div></div>`;}
 function wzBack(){if(S.wz.step>1){S.wz.step--;go('wizard');}else{tab('home');}}
@@ -154,23 +155,26 @@ function vWizard(){const w=S.wz;
   let inner='';
   if(w.step===1){inner=`${wzDots(9,1)}<h2 class="stitle">Property type</h2><div class="mut">What kind of property is this?</div>
   <div class="seg">${['Apartment','Shop','Other'].map(t=>`<button class="${w.type===t?'on':''}" onclick="S.wz.type='${t}';go('wizard')">${t}</button>`).join('')}</div>`;}
-  if(w.step===2){inner=`${wzDots(9,2)}<h2 class="stitle">Property name</h2><div class="mut">e.g. R-15, Gulshan Block 4</div>
-  <label>Property name</label><input id="w_name" value="${esc(w.name)}" placeholder="R-15" oninput="S.wz.name=this.value">`;}
-  if(w.step===3){inner=`${wzDots(9,3)}<h2 class="stitle">Floors</h2><div class="mut">How many floors does the building have?</div>
+  if(w.step===2){inner=`${wzDots(9,2)}<h2 class="stitle">Property name</h2><div class="mut">e.g. My Villa</div>
+  <label>Property name</label><input id="w_name" value="${esc(w.name)}" placeholder="My Villa" oninput="S.wz.name=this.value">`;}
+  if(w.step===3){inner=`${wzDots(9,3)}<h2 class="stitle">Floors</h2><div class="mut">How many floors does the building have? <b>Count the ground floor as Floor 1.</b></div>
   <div class="stepper"><button onclick="S.wz.floors=Math.max(1,S.wz.floors-1);go('wizard')">−</button><div class="val">${w.floors}</div><button onclick="S.wz.floors=Math.min(10,S.wz.floors+1);go('wizard')">＋</button></div>`;}
-  if(w.step===4){let h='';for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[]});const n=fh.n||1;
-    h+=`<div class="card"><div class="row"><div class="grow"><b>Floor ${f+1}</b><div class="mut">Houses on this floor</div></div>
+  if(w.step===4){let h='';for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[],owners:[]});const n=fh.n||1;
+    h+=`<div class="card"><div class="row"><div class="grow"><b>Floor ${f+1}${f===0?' (Ground floor)':''}</b><div class="mut">Houses on this floor</div></div>
     <div class="stepper"><button onclick="wzFloorN(${f},-1)">−</button><div class="val">${n}</div><button onclick="wzFloorN(${f},1)">＋</button></div></div>`;
-    for(let i=0;i<n;i++){h+=`<label>House ${i+1} name / code</label><input value="${esc(fh.names[i]||'')}" placeholder="e.g. ${esc(w.name||'R-15')}-F${f+1}H${i+1}" oninput="S.wz.floorHouses[${f}].names[${i}]=this.value">`;}
+    for(let i=0;i<n;i++){const ow=(fh.owners||[])[i];h+=`<label>House ${i+1} name / code</label><input value="${esc(fh.names[i]||'')}" placeholder="e.g. ${'ABCDEFGH'[f]}-0${i+1}" oninput="S.wz.floorHouses[${f}].names[${i}]=this.value">
+    <button class="chip ${ow?'on':''}" style="margin-top:6px" onclick="wzOwner(${f},${i})">🏠 Owner lives here${ow?' ✓':''}</button>`;}
     h+='</div>';}
-    inner=`${wzDots(9,4)}<h2 class="stitle">Houses per floor</h2><div class="mut">Each floor can have a different number of houses.</div>`+h;}
+    inner=`${wzDots(9,4)}<h2 class="stitle">Houses per floor</h2><div class="mut">Each floor can have a different number of houses. If <b>you (the owner)</b> live in a house, mark it — it will be excluded from bills.</div>`+h;}
   if(w.step===5){const hs=flatHouses();let h='';
-    hs.forEach((hh,i)=>{const m=w.houseMeters[i]||(w.houseMeters[i]={e:false,g:false,eNo:'',gNo:''});
+    hs.forEach((hh,i)=>{const m=w.houseMeters[i]||(w.houseMeters[i]={e:false,g:false,wt:false,eNo:'',gNo:'',wNo:''});
     h+=`<div class="card"><b>${esc(hh.code||('Floor '+hh.floor+' · House '+(hh.idx+1)))}</b>
     <label>Electricity sub-meter installed?</label><div class="seg"><button class="${m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=true;go('wizard')">Yes</button><button class="${!m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=false;go('wizard')">No</button></div>
     ${m.e?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.eNo)}" placeholder="e.g. SN-45218" oninput="S.wz.houseMeters[${i}].eNo=this.value">`:''}
     <label>Gas sub-meter installed?</label><div class="seg"><button class="${m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=true;go('wizard')">Yes</button><button class="${!m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=false;go('wizard')">No</button></div>
-    ${m.g?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.gNo)}" placeholder="e.g. SN-77120" oninput="S.wz.houseMeters[${i}].gNo=this.value">`:''}</div>`;});
+    ${m.g?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.gNo)}" placeholder="e.g. SN-77120" oninput="S.wz.houseMeters[${i}].gNo=this.value">`:''}
+    <label>Water sub-meter installed?</label><div class="seg"><button class="${m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=true;go('wizard')">Yes</button><button class="${!m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=false;go('wizard')">No</button></div>
+    ${m.wt?`<label>Printed water sub-meter number</label><input value="${esc(m.wNo)}" placeholder="e.g. W-31055" oninput="S.wz.houseMeters[${i}].wNo=this.value">`:''}</div>`;});
     inner=`${wzDots(9,5)}<h2 class="stitle">Sub-meters per house</h2><div class="mut">For every house: does it have its own sub-meter? Enter the printed serial number from the meter.</div>`+h;}
   if(w.step===6){const hs=flatHouses();
     const meterSec=(title,key,ph)=>{let h=`<div class="card"><h2 class="stitle">${title}</h2><div class="mut">Add as many as installed. For each meter, select which house(s) it serves.</div>`;
@@ -181,13 +185,21 @@ function vWizard(){const w=S.wz;
     h+=`<button class="btn btn2" onclick="S.wz['${key}'].push({no:'',houses:[]});go('wizard')">＋ Add another meter</button></div>`;return h;};
     inner=`${wzDots(9,6)}<h2 class="stitle">Official meters</h2>`+meterSec('⚡ KE account numbers','keMeters','e.g. 040012345678')+meterSec('🔥 SSGC customer numbers','gasMeters','e.g. 1234567890');}
   if(w.step===7){const CH=[['sec','Security charges'],['water','Water charges'],['maint','Maintenance'],['motor','Motor / common']];
+    const VM={sec:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.']],
+      water:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.'],['submeter','By water sub-meter reading','Each house pays in proportion to its water meter units: total × (house units ÷ all units).']],
+      maint:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.']],
+      motor:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.']]};
     inner=`${wzDots(9,7)}<h2 class="stitle">Fixed / variable charges</h2><div class="mut">For each charge choose: none, a fixed monthly amount, or variable.</div>`+
     CH.map(([k,nm])=>{const c=w.charges[k];
     return `<div class="card"><b>${nm}</b><div class="seg">${['none','fixed','variable'].map(m=>`<button class="${c.mode===m?'on':''}" onclick="S.wz.charges.${k}.mode='${m}';go('wizard')">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
     ${c.mode==='fixed'?`<label>Fixed monthly amount (Rs)</label><input type="number" inputmode="numeric" value="${esc(c.amt)}" placeholder="e.g. 500" oninput="S.wz.charges.${k}.amt=this.value">`:''}
     ${c.mode==='variable'?`<label>If variable, how should the app calculate each house's share?</label>
-      ${[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents. Bigger families pay more.'],['submeter','By sub-meter reading','Each house pays in proportion to its meter units: total × (house units ÷ all units).']].map(([m,t,f])=>`
-      <div class="radio ${c.method===m?'on':''}" onclick="S.wz.charges.${k}.method='${m}';go('wizard')"><input type="radio" ${c.method===m?'checked':''}><div><b>${t}</b><div class="formula">${f}</div></div></div>`).join('')}`:''}</div>`;}).join('');}
+      ${VM[k].map(([m,t,f])=>`
+      <div class="radio ${c.method===m?'on':''}" onclick="S.wz.charges.${k}.method='${m}';go('wizard')"><input type="radio" ${c.method===m?'checked':''}><div><b>${t}</b><div class="formula">${f}</div></div></div>`).join('')}`:''}</div>`;}).join('')
+    +(w.charges.motor.mode!=='none'?`<div class="card"><b>🔌 Motor meter</b><div class="mut">Does the motor have its own meter? If yes, enter it.</div>
+      <div class="seg">${['none','sub','ke'].map(t=>`<button class="${w.motorMeter.type===t?'on':''}" onclick="S.wz.motorMeter.type='${t}';go('wizard')">${t==='none'?'No meter':t==='sub'?'Sub-meter':'KE account'}</button>`).join('')}</div>
+      ${w.motorMeter.type!=='none'?`<label>Motor meter number</label><input value="${esc(w.motorMeter.no)}" placeholder="${w.motorMeter.type==='ke'?'e.g. 040012345678':'e.g. SN-90210'}" oninput="S.wz.motorMeter.no=this.value">`:''}</div>`:`
+      <div class="note">💡 Tip: enable the <b>Motor</b> charge above to record its meter.</div>`);}
   if(w.step===8){const ruleRow=(lbl,key)=>`<div class="card"><b>${lbl}</b>
     ${[['equal','Split equally per house'],['submeter','By sub-meter reading'],['person','Per person (resident count)']].map(([m,t])=>`
     <div class="radio ${w[key]===m?'on':''}" onclick="S.wz.${key}='${m}';go('wizard')"><input type="radio" ${w[key]===m?'checked':''}><div><b>${t}</b></div></div>`).join('')}</div>`;
@@ -203,16 +215,19 @@ function vWizard(){const w=S.wz;
     <div class="kv"><span>KE meters</span><b>${w.keMeters.filter(m=>m.no).length}</b></div>
     <div class="kv"><span>SSGC meters</span><b>${w.gasMeters.filter(m=>m.no).length}</b></div>
     <div class="kv"><span>Electricity split</span><b>${w.eRule}</b></div>
-    <div class="kv"><span>Gas split</span><b>${w.gRule}</b></div></div>
+    <div class="kv"><span>Gas split</span><b>${w.gRule}</b></div>
+    <div class="kv"><span>Motor meter</span><b>${esc(w.motorMeter.no||'—')}</b></div></div>
     <div class="mut">Houses: ${hs.map(h=>esc(h.code||('F'+h.floor+'H'+(h.idx+1)))).join(', ')}</div>`;}
   return `${wzBar('Register Property',w.step)}<div class="body">${inner}${wzNextBtn(w.step===9?'✓ Finish & Create Property':null)}</div>`;
 }
-function wzFloorN(f,d){const w=S.wz;const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[]});fh.n=Math.min(8,Math.max(1,(fh.n||1)+d));go('wizard');}
+function wzFloorN(f,d){const w=S.wz;const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[],owners:[]});fh.n=Math.min(8,Math.max(1,(fh.n||1)+d));go('wizard');}
+function wzOwner(f,i){const fh=S.wz.floorHouses[f];fh.owners=fh.owners||[];fh.owners[i]=!fh.owners[i];go('wizard');}
 function wzMeterDel(key,mi){S.wz[key].splice(mi,1);go('wizard');}
 function wzMeterShare(key,mi,hi){const a=S.wz[key][mi].houses;const i=a.indexOf(hi);if(i>=0)a.splice(i,1);else a.push(hi);go('wizard');}
 function finishWz(){const w=S.wz,hs=flatHouses();
-  S.prop={name:w.name,type:w.type,floors:w.floors,keMeters:w.keMeters.filter(m=>m.no),gasMeters:w.gasMeters.filter(m=>m.no),charges:w.charges,eRule:w.eRule,gRule:w.gRule};
-  S.houses=hs.map((h,i)=>{const m=w.houseMeters[i]||{};return{id:'h'+(++S.seq),code:h.code||((w.name||'P')+'-F'+h.floor+'H'+(h.idx+1)),floor:h.floor,tenant:'',residents:0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:m.eNo||'',subG:m.gNo||'',prevE:0,prevG:0,status:'due'};});
+  S.prop={name:w.name,type:w.type,floors:w.floors,keMeters:w.keMeters.filter(m=>m.no),gasMeters:w.gasMeters.filter(m=>m.no),motorMeter:w.motorMeter,charges:w.charges,eRule:w.eRule,gRule:w.gRule};
+  S.houses=hs.map((h,i)=>{const m=w.houseMeters[i]||{};const ow=((w.floorHouses[h.floor-1]||{}).owners||[])[h.idx];
+  return{id:'h'+(++S.seq),code:h.code||((w.name||'P')+'-F'+h.floor+'H'+(h.idx+1)),floor:h.floor,tenant:'',residents:0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:m.eNo||'',subG:m.gNo||'',subW:m.wNo||'',prevE:0,prevG:0,prevW:0,curW:'',owner:!!ow,status:'due'};});
   toast('Property "'+w.name+'" registered');tab('home');}
 </script>
 <script>
@@ -222,7 +237,7 @@ function vHouses(){
   const rows=S.houses.map(h=>`<div class="hrow" onclick="go('sheet','${h.id}')">
     <div class="dp">${esc((h.tenant||h.code||'?')[0].toUpperCase())}</div>
     <div class="grow"><b>${esc(h.tenant||'(vacant)')}</b><div class="mut">${esc(h.code)} · Floor ${h.floor} · ${h.residents} person(s)</div></div>
-    <span class="st ${h.status==='paid'?'paid':'due'}">${h.status==='paid'?'Paid':'Due'}</span></div>`).join('');
+    <span class="st ${h.owner?'paid':h.status==='paid'?'paid':'due'}">${h.owner?'Owner':h.status==='paid'?'Paid':'Due'}</span></div>`).join('');
   return shell(`<div class="row" style="margin-bottom:12px"><h2 class="stitle grow">Houses · ${esc(S.prop.name)}</h2><button class="icobtn" onclick="addHouseForm()" title="Add house">＋</button></div>
   <div id="addh"></div>${rows||'<div class="empty">No houses yet — tap ＋ to add.</div>'}`);
 }
@@ -230,30 +245,38 @@ function addHouseForm(){$('addh').innerHTML=`<div class="card"><b>Add house</b>
   <label>House code</label><input id="ah_code" placeholder="e.g. ${esc(S.prop.name)}-A">
   <label>Tenant name</label><input id="ah_tenant" placeholder="e.g. Ahmed Khan">
   <label>Residents (person count)</label><input id="ah_res" type="number" inputmode="numeric" placeholder="0">
+  <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="ah_owner" style="width:24px;height:24px;margin:0"> <span>Owner lives here (no bill)</span></label>
   <div class="row"><button class="btn btn2 grow" onclick="$('addh').innerHTML=''">Cancel</button><button class="btn grow" onclick="addHouse()">Add</button></div></div>`;}
 function addHouse(){const code=$('ah_code').value.trim()||('H'+(S.houses.length+1));
-  S.houses.push({id:'h'+(++S.seq),code,floor:1,tenant:$('ah_tenant').value.trim(),residents:+$('ah_res').value||0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:'',subG:'',prevE:0,prevG:0,curE:'',curG:'',status:'due'});
+  S.houses.push({id:'h'+(++S.seq),code,floor:1,tenant:$('ah_tenant').value.trim(),residents:+$('ah_res').value||0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:'',subG:'',subW:'',prevE:0,prevG:0,prevW:0,curE:'',curG:'',curW:'',owner:$('ah_owner').checked,status:'due'});
   toast('House '+code+' added');tab('houses');}
 const H=id=>S.houses.find(h=>h.id===id);
 
 /* ================= MONTHLY HOUSE SHEET ================= */
 function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   const p=S.prop;
-  const meterRow=(lbl,sub,prev,cur,ph)=>sub?`<div class="card"><b>${lbl}</b><div class="mut">Sub-meter: ${esc(sub)} · Last: ${prev}</div>
+  const meterRow=(lbl,sub,prev,cur,ph,kind)=>sub?`<div class="card"><b>${lbl}</b><div class="mut">Sub-meter: ${esc(sub)} · Last: ${prev}</div>
   <label>Current reading</label><input id="${ph}" type="number" inputmode="numeric" value="${esc(cur)}" placeholder="Enter reading">
-  <button class="btn btn2" onclick="toast('Meter photo attached (demo)')">📷 Attach meter photo</button></div>`:'';
-  const varCharge=k=>p.charges[k].mode==='variable'?`<label>Total ${k} bill this month (Rs) — will split ${p.charges[k].method}</label><input id="vt_${k}" type="number" inputmode="numeric" placeholder="e.g. 3000">`:'';
-  return `${sheetBar('Monthly Sheet · '+h.code)}<div class="body">
+  ${fileBtn(h.id,kind,'📷 Attach meter photo')}
+  ${fileChips(h,kind)}</div>`:'';
+  const CNM={sec:'Security',water:'Water',maint:'Maintenance',motor:'Motor'};
+  const varCharge=k=>p.charges[k].mode==='variable'?`<label>Total ${CNM[k]} bill this month (Rs) — will split ${p.charges[k].method}</label><input id="vt_${k}" type="number" inputmode="numeric" placeholder="e.g. 3000">`:'';
+  return `${sheetBar('Monthly Sheet · '+h.code+(h.owner?' · Owner':''))}<div class="body">
   <div class="card"><div class="row"><div class="dp">${esc((h.tenant||h.code)[0].toUpperCase())}</div>
   <div class="grow"><label style="margin-top:0">Tenant name</label><input id="sh_tenant" value="${esc(h.tenant)}" oninput="H('${h.id}').tenant=this.value" style="margin-top:2px"></div></div>
   <div class="row"><div class="grow"><label>Residents</label><input id="sh_res" type="number" value="${h.residents}" oninput="H('${h.id}').residents=+this.value||0"></div>
-  <div class="grow"><label>Rent (Rs)</label><input id="sh_rent" type="number" value="${h.rent}" oninput="H('${h.id}').rent=+this.value||0"></div></div>
-  <div class="row"><div class="grow"><label>Lease advance</label><input type="number" value="${h.advance}" oninput="H('${h.id}').advance=+this.value||0"></div>
-  <div class="grow"><label>Prior dues (Rs)</label><input type="number" value="${h.priorDues}" oninput="H('${h.id}').priorDues=+this.value||0"></div></div>
-  <label>Previous extra / credit (Rs) — negative = credit, e.g. -368</label><input type="number" value="${h.prevExtra}" oninput="H('${h.id}').prevExtra=+this.value||0">
-  <div class="row" style="margin-top:10px"><button class="btn btn2 grow" onclick="toast('Agreement viewer (demo)')">📄 Agreement</button><button class="btn btn2 grow" onclick="toast('CNIC viewer (demo)')">🪪 CNIC</button><button class="btn btn2 grow" onclick="toast('Job card (demo)')">🧰 Job Card</button></div></div>
-  ${meterRow('⚡ Electricity',h.subE,h.prevE,h.curE,'curE')}
-  ${meterRow('🔥 Gas',h.subG,h.prevG,h.curG,'curG')}
+  <div class="grow"><label>Rent (Rs)</label><input id="sh_rent" type="number" value="${h.rent}" oninput="H('${h.id}').rent=+this.value||0;updTotal('${h.id}')"></div></div>
+  <div class="row"><div class="grow"><label>Lease advance</label><input type="number" value="${h.advance}" oninput="H('${h.id}').advance=+this.value||0;updTotal('${h.id}')"></div>
+  <div class="grow"><label>Prior dues (Rs)</label><input type="number" value="${h.priorDues}" oninput="H('${h.id}').priorDues=+this.value||0;updTotal('${h.id}')"></div></div>
+  <label>Previous extra / credit (Rs) — negative = credit, e.g. -368</label><input type="number" value="${h.prevExtra}" oninput="H('${h.id}').prevExtra=+this.value||0;updTotal('${h.id}')">
+  <div class="row" style="margin-top:10px">${fileBtn(h.id,'agreement','📄 Agreement')}${fileBtn(h.id,'cnic','🪪 CNIC')}${fileBtn(h.id,'jobcard','🧰 Job Card')}</div>
+  <div class="chips">${['agreement','cnic','jobcard'].map(k=>{const f=h.files&&h.files[k];return f?`<span class="chip on">📎 ${k}: ${esc(f.name)}</span>`:'';}).join('')}</div>
+  <label style="margin-top:10px">This month's total (Rs) — auto-calculated, you can edit</label><input id="m_total" type="number" value="${(h.rent||0)+(h.priorDues||0)+(h.prevExtra||0)}">
+  <div class="formula">= Rent + Prior dues + Prev extra · updates as you type above · advance tracked separately</div></div>
+  ${h.owner?'<div class="note">🏠 Owner-occupied house — no bill is generated for this house, and it is excluded from splits.</div>':''}
+  ${meterRow('⚡ Electricity',h.subE,h.prevE,h.curE,'curE','meterE')}
+  ${meterRow('🔥 Gas',h.subG,h.prevG,h.curG,'curG','meterG')}
+  ${meterRow('💧 Water',h.subW,h.prevW,h.curW,'curW','meterW')}
   <div class="card"><h2 class="stitle">This month's totals</h2>
   <label>Total KE bill (Rs)</label><input id="t_ke" type="number" inputmode="numeric" placeholder="e.g. 5000">
   <label>Total gas bill (Rs)</label><input id="t_gas" type="number" inputmode="numeric" placeholder="e.g. 2000">
@@ -262,25 +285,32 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <button class="btn" onclick="genBill('${h.id}')">🧾 Generate Bill</button>
   <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
 }
+function fileBtn(hid,kind,lbl){return `<button class="btn btn2" onclick="document.getElementById('f_${hid}_${kind}').click()">${lbl}</button><input type="file" id="f_${hid}_${kind}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${hid}','${kind}',this)">`;}
+function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');go('sheet',hid);}
+function fileChips(h,kind){const f=h.files&&h.files[kind];if(!f)return '';return `<div class="chips"><span class="chip on">📎 ${esc(f.name)}</span></div>`;}
+function updTotal(hid){const h=H(hid);const el=$('m_total');if(el)el.value=(+h.rent||0)+(+h.priorDues||0)+(+h.prevExtra||0);}
 function sheetBar(t){return `<div class="hdr"><button class="back" onclick="tab('houses')">←</button><h1 style="font-size:15px">${esc(t)}</h1></div>`;}
 
 /* ---------- Bill engine: applies saved split rules ---------- */
-function share(total,rule,h,hs,units,sumU,totRes){
+function share(total,rule,h,hs,units,sumU,totRes,nb){
   if(!(total>0))return 0;
-  if(rule==='equal'||hs.length===0)return total/hs.length;
-  if(rule==='person')return totRes>0?total*(+h.residents||0)/totRes:total/hs.length;
-  if(rule==='submeter')return sumU>0?total*units/sumU:total/hs.length;
-  return total/hs.length;
+  if(rule==='equal'||nb===0)return total/nb;
+  if(rule==='person')return totRes>0?total*(+h.residents||0)/totRes:total/nb;
+  if(rule==='submeter')return sumU>0?total*units/sumU:total/nb;
+  return total/nb;
 }
 function genBill(id){const h=H(id),p=S.prop,hs=S.houses;
-  h.curE=$('curE')?+$('curE').value||0:h.curE; h.curG=$('curG')?+$('curG').value||0:h.curG;
+  if(h.owner){toast('Owner-occupied house — no bill needed');return;}
+  h.curE=$('curE')?+$('curE').value||0:h.curE; h.curG=$('curG')?+$('curG').value||0:h.curG; h.curW=$('curW')?+$('curW').value||0:h.curW;
   const keTot=+$('t_ke').value||0, gasTot=+$('t_gas').value||0;
-  const units=hs.map(x=>Math.max(0,(+x.curE||0)-(+x.prevE||0)));
-  const gunits=hs.map(x=>Math.max(0,(+x.curG||0)-(+x.prevG||0)));
-  const sumU=units.reduce((a,b)=>a+b,0), sumGU=gunits.reduce((a,b)=>a+b,0), totRes=hs.reduce((a,x)=>a+(+x.residents||0),0);
+  const nb=hs.filter(x=>!x.owner).length||1;
+  const units=hs.map(x=>x.owner?0:Math.max(0,(+x.curE||0)-(+x.prevE||0)));
+  const gunits=hs.map(x=>x.owner?0:Math.max(0,(+x.curG||0)-(+x.prevG||0)));
+  const wunits=hs.map(x=>x.owner?0:Math.max(0,(+x.curW||0)-(+x.prevW||0)));
+  const sumU=units.reduce((a,b)=>a+b,0), sumGU=gunits.reduce((a,b)=>a+b,0), sumWU=wunits.reduce((a,b)=>a+b,0), totRes=hs.reduce((a,x)=>a+(x.owner?0:(+x.residents||0)),0);
   const ui=hs.indexOf(h);
-  const eShare=share(keTot,p.eRule,h,hs,units[ui],sumU,totRes);
-  const gShare=share(gasTot,p.gRule,h,hs,gunits[ui],sumGU,totRes);
+  const eShare=share(keTot,p.eRule,h,hs,units[ui],sumU,totRes,nb);
+  const gShare=share(gasTot,p.gRule,h,hs,gunits[ui],sumGU,totRes,nb);
   const lines=[],calc=[];
   if(h.rent>0)lines.push(['Rent',h.rent]);
   if(keTot>0){lines.push(['KE bill',Math.round(eShare)]);calc.push(`<b>⚡ KE Rs ${keTot}</b> split <b>${p.eRule}</b> → Rs ${Math.round(eShare)}`);}
@@ -289,9 +319,9 @@ function genBill(id){const h=H(id),p=S.prop,hs=S.houses;
   for(const k of['sec','water','maint','motor']){const c=p.charges[k];let amt=0,how='';
     if(c.mode==='fixed'){amt=+c.amt||0;how='fixed Rs '+amt;}
     else if(c.mode==='variable'){const t=+$('vt_'+k).value||0;
-      if(c.method==='equal'){amt=t/hs.length;how=`variable Rs ${t} ÷ ${hs.length} houses`;}
+      if(c.method==='equal'){amt=t/nb;how=`variable Rs ${t} ÷ ${nb} house(s)`;}
       else if(c.method==='person'){amt=totRes>0?t*(+h.residents||0)/totRes:0;how=`variable Rs ${t} × ${h.residents}/${totRes} persons`;}
-      else{amt=sumU>0?t*units[ui]/sumU:0;how=`variable Rs ${t} × ${units[ui]}/${sumU} units`};}
+      else if(k==='water'){amt=sumWU>0?t*wunits[ui]/sumWU:0;how=`variable Rs ${t} × ${wunits[ui]}/${sumWU} water units`};}
     if(amt>0){lines.push([CN[k]+(c.mode==='variable'?' (variable)':''),Math.round(amt)]);calc.push(`<b>${CN[k]} Rs ${Math.round(amt)}</b> — ${how} (saved rule)`);}}
   if(h.priorDues>0)lines.push(['Prior dues',h.priorDues]);
   if(h.prevExtra)lines.push(['Prev extra',h.prevExtra]);
@@ -330,14 +360,30 @@ body.light .toast{background:#e6f6ec;color:#14202f}
 </style>
 <script>
 /* ================= COLLECTION (rows are clickable) ================= */
+function lastMonths(n){const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const out=[];const d=new Date();for(let i=0;i<n;i++){out.push(m[d.getMonth()]+' '+d.getFullYear());d.setMonth(d.getMonth()-1);}return out;}
+const MONTHS=lastMonths(12);
+function pastForm(){$('addrec').innerHTML=`<div class="card"><b>＋ Add past record</b><div class="mut">Enter old-month data for any house.</div>
+  <label>House</label><select id="pr_house">${S.houses.map(h=>`<option value="${h.id}">${esc(h.code)} — ${esc(h.tenant||'vacant')}</option>`).join('')}</select>
+  <label>Month</label><select id="pr_month">${MONTHS.map(m=>`<option ${m===S.collMonth?'selected':''}>${m}</option>`).join('')}</select>
+  <label>Amount (Rs)</label><input id="pr_amt" type="number" inputmode="numeric" placeholder="e.g. 12000">
+  <label>Status</label><div class="seg" id="pr_st"><button class="on" onclick="prStatus('paid')">Paid</button><button onclick="prStatus('due')">Due</button></div>
+  <div class="row"><button class="btn btn2 grow" onclick="$('addrec').innerHTML=''">Cancel</button><button class="btn grow" onclick="addPast()">Save</button></div></div>`;S._prSt='paid';}
+function prStatus(s){S._prSt=s;const b=$('pr_st').children;b[0].className=s==='paid'?'on':'';b[1].className=s==='due'?'on':'';}
+function addPast(){const hid=$('pr_house').value,m=$('pr_month').value,a=+$('pr_amt').value||0;
+  S.past=S.past.filter(r=>!(r.houseId===hid&&r.month===m));
+  S.past.push({id:'p'+Date.now(),houseId:hid,month:m,amount:a,status:S._prSt||'paid'});
+  toast('Past record saved for '+m);render();}
 function vColl(){
   if(!S.prop) return shell(`<div class="empty"><div style="font-size:52px">🧾</div><p>Register a property first.</p><button class="btn" onclick="startWz()">＋ ${T('reg')}</button></div>`);
-  const amt=h=>S.bills[h.id]?S.bills[h.id].total:(h.rent||0);
+  const rec=h=>{const b=S.bills[h.id];if(b&&b.month===S.collMonth)return{amount:b.total,status:h.status,src:'bill'};
+    const r=S.past.find(r=>r.houseId===h.id&&r.month===S.collMonth);if(r)return{amount:r.amount,status:r.status,src:'past'};
+    return{amount:h.rent||0,status:h.status,src:'rent'};};
+  const amt=h=>rec(h).amount;
   const exp=S.houses.reduce((a,h)=>a+amt(h),0);
-  const col=S.houses.filter(h=>h.status==='paid').reduce((a,h)=>a+amt(h),0);
+  const col=S.houses.filter(h=>rec(h).status==='paid').reduce((a,h)=>a+amt(h),0);
   const pct=exp>0?Math.round(col/exp*100):0;
   const tabs=`<div class="tabrow"><button class="${S.collTab==='bld'?'on':''}" onclick="S.collTab='bld';render()">Building-wise</button><button class="${S.collTab==='house'?'on':''}" onclick="S.collTab='house';render()">House-wise</button></div>`;
-  const msel=`<label>Month</label><select onchange="S.collMonth=this.value;render()">${['Sep 2026','Aug 2026','Jul 2026'].map(m=>`<option ${S.collMonth===m?'selected':''}>${m}</option>`).join('')}</select>`;
+  const msel=`<label>Month</label><select onchange="S.collMonth=this.value;render()">${MONTHS.map(m=>`<option ${S.collMonth===m?'selected':''}>${m}</option>`).join('')}</select>`;
   let body='';
   if(S.collTab==='bld'){
     body=`<div class="hrow" onclick="tab('houses')"><div class="dp">🏢</div><div class="grow"><b>${esc(S.prop.name)}</b>
@@ -345,13 +391,14 @@ function vColl(){
     <div style="background:#2b3a55;border-radius:6px;height:8px;margin-top:6px"><div style="width:${pct}%;background:var(--acc);height:8px;border-radius:6px"></div></div></div>
     <b>${pct}%</b></div><div class="mut">Tap a building to open its houses →</div>`;
   }else{
-    body=S.houses.map(h=>{const a=amt(h);return `<div class="hrow" onclick="go('sheet','${h.id}')">
+    body=S.houses.map(h=>{const r=rec(h);return `<div class="hrow" onclick="go('sheet','${h.id}')">
     <div class="dp">${esc((h.tenant||h.code)[0].toUpperCase())}</div>
-    <div class="grow"><b>${esc(h.tenant||'(vacant)')}</b><div class="mut">${esc(S.prop.name)} · ${esc(h.code)}</div></div>
-    <div style="text-align:right"><b>Rs ${a||'—'}</b><br><span class="st ${h.status==='paid'?'paid':'due'}">${h.status==='paid'?'Paid':'Due'}</span></div></div>`;}).join('')
+    <div class="grow"><b>${esc(h.tenant||'(vacant)')}</b><div class="mut">${esc(S.prop.name)} · ${esc(h.code)}${r.src==='past'?' · past record':''}</div></div>
+    <div style="text-align:right"><b>Rs ${r.amount||'—'}</b><br><span class="st ${r.status==='paid'?'paid':'due'}">${r.status==='paid'?'Paid':'Due'}</span></div></div>`;}).join('')
     +`<div class="mut">Tap a house to open its monthly sheet →</div>`;
   }
-  return shell(`<h2 class="stitle">Collection</h2>${msel}<div style="height:8px"></div>${tabs}${body}`);
+  return shell(`<h2 class="stitle">Collection</h2>${msel}<div style="height:8px"></div>${tabs}${body}
+  <div id="addrec"></div><button class="btn btn2" onclick="pastForm()">＋ Add past record (old months)</button>`);
 }
 
 /* ================= SETTINGS (everything works) ================= */
