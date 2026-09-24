@@ -3,434 +3,389 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RMS — Interactive UI Prototype</title>
+<title>RMS – Interactive UI Prototype v2</title>
 <style>
-  :root{
-    --green:#0B6F4B; --green-d:#095c3e; --teal:#0e9f8a;
-    --bg:#f2f5f3; --card:#ffffff; --ink:#12211a; --muted:#6b7d74;
-    --line:#e3eae6; --danger:#c0392b; --amber:#b7791f;
-    --radius:14px;
-  }
-  body.dark{ --bg:#0f1512; --card:#18211c; --ink:#e8f0eb; --muted:#93a79b; --line:#26332c; }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    background:#0c0f0d; color:var(--ink); min-height:100dvh;
-    display:flex; align-items:center; justify-content:center; padding:12px;
-  }
-  .phone{
-    width:402px; max-width:100%; height:min(880px,96dvh); background:var(--bg);
-    border-radius:34px; overflow:hidden; position:relative;
-    box-shadow:0 30px 80px rgba(0,0,0,.55); display:flex; flex-direction:column;
-    border:10px solid #1b1f1c;
-  }
-  @media (max-width:480px){
-    body{padding:0;} .phone{width:100%;height:100dvh;border-radius:0;border:none;}
-  }
-  .screen{display:none; flex-direction:column; height:100%; overflow:hidden;}
-  .screen.active{display:flex;}
-  .body{flex:1; overflow-y:auto; padding:14px 14px 90px;}
-  .topbar{
-    display:flex; align-items:center; gap:10px; padding:14px;
-    background:var(--card); border-bottom:1px solid var(--line); flex-shrink:0;
-  }
-  .topbar h1{font-size:17px; margin:0; flex:1;}
-  .back{border:none;background:var(--bg);color:var(--ink);width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;}
-  .iconbtn{border:none;background:var(--bg);color:var(--ink);min-width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;padding:0 8px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:12px;}
-  .row{display:flex; align-items:center; gap:12px;}
-  .prop{cursor:pointer; transition:transform .08s;}
-  .prop:active{transform:scale(.985);}
-  .prop .meta{flex:1;}
-  .prop .nm{font-weight:700; font-size:16px;}
-  .badge{font-size:11px; background:#e7f4ee; color:var(--green); border-radius:20px; padding:3px 10px; font-weight:700;}
-  body.dark .badge{background:#123528;}
-  .due{color:var(--danger); font-weight:700; font-size:14px;}
-  .ok{color:var(--green); font-weight:700; font-size:14px;}
-  .muted{color:var(--muted); font-size:13px;}
-  .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0;}
-  .btn{
-    display:block; width:100%; border:none; cursor:pointer; border-radius:14px;
-    padding:15px; font-size:16px; font-weight:700; margin-top:10px; min-height:48px;
-  }
-  .btn-p{background:var(--green); color:#fff;}
-  .btn-p:active{background:var(--green-d);}
-  .btn-s{background:var(--bg); color:var(--ink); border:1px solid var(--line);}
-  .btnrow{display:flex; gap:10px;} .btnrow .btn{margin-top:0;}
-  label.f{display:block; font-size:13px; font-weight:700; color:var(--muted); margin:12px 0 6px;}
-  input[type=text],input[type=number],input[type=password],input[type=tel],select{
-    width:100%; padding:13px 12px; font-size:16px; border-radius:12px;
-    border:1px solid var(--line); background:var(--card); color:var(--ink);
-  }
-  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
-  .chip{border:1.5px solid var(--line); background:var(--card); color:var(--ink); border-radius:20px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px;}
-  .chip.on{background:var(--green); border-color:var(--green); color:#fff;}
-  .toggle{position:relative; width:52px; height:30px; background:#cfd8d3; border-radius:20px; cursor:pointer; flex-shrink:0; border:none;}
-  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; background:#fff; border-radius:50%; transition:left .15s;}
-  .toggle.on{background:var(--green);} .toggle.on::after{left:25px;}
-  .steps{display:flex; gap:6px; margin:10px 0 2px;}
-  .steps i{flex:1; height:5px; border-radius:4px; background:var(--line);}
-  .steps i.done{background:var(--green);}
-  .stepTag{font-size:12px; color:var(--muted); font-weight:700;}
-  .bill{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; font-size:16px;}
-  .bill .h{font-weight:800; font-size:18px; margin-bottom:10px;}
-  .bill .ln{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px dashed var(--line);}
-  .bill .ln span:last-child{font-variant-numeric:tabular-nums; font-weight:600;}
-  .bill .tot{display:flex; justify-content:space-between; padding:12px 0 2px; font-size:19px; font-weight:800;}
-  .neg{color:var(--danger);}
-  .tabs{display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:4px; margin-bottom:12px;}
-  .tabs button{flex:1; border:none; background:transparent; color:var(--muted); font-weight:700; font-size:14px; padding:11px; border-radius:10px; cursor:pointer;}
-  .tabs button.on{background:var(--green); color:#fff;}
-  .bar{height:8px; background:var(--line); border-radius:6px; overflow:hidden; margin-top:8px;}
-  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--green)); border-radius:6px;}
-  .setrow{display:flex; align-items:center; gap:12px; padding:14px 2px; border-bottom:1px solid var(--line); cursor:pointer;}
-  .setrow:last-child{border-bottom:none;}
-  .setrow .t{flex:1;} .setrow .t b{display:block; font-size:15px;} .setrow .t small{color:var(--muted); font-size:12px;}
-  .bottomnav{
-    position:absolute; bottom:0; left:0; right:0; display:flex; background:var(--card);
-    border-top:1px solid var(--line); padding:8px 4px calc(10px + env(safe-area-inset-bottom)); z-index:5;
-  }
-  .bottomnav button{flex:1; border:none; background:none; color:var(--muted); font-size:11px; font-weight:700; padding:8px; cursor:pointer; border-radius:10px;}
-  .bottomnav button .e{font-size:20px; display:block;}
-  .bottomnav button.on{color:var(--green);}
-  .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--teal),var(--green));display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;font-weight:800;margin:26px auto 8px;}
-  .center{text-align:center;}
-  .sample{font-size:11px; color:var(--muted); text-align:center; margin:2px 0 10px;}
-  .chk{display:flex; align-items:center; gap:10px; font-weight:700; font-size:15px; cursor:pointer; padding:6px 0;}
-  .chk input{width:22px; height:22px; accent-color:var(--green);}
-  .photoBtn{border:1.5px dashed var(--line); background:var(--card); color:var(--muted); border-radius:12px; padding:11px 14px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;}
-  .readrow{display:flex; gap:8px; align-items:center; margin-top:8px;}
-  .readrow input{flex:1;}
-  .toast{
-    position:absolute; left:50%; bottom:92px; transform:translateX(-50%) translateY(20px);
-    background:#12211a; color:#fff; padding:12px 20px; border-radius:30px; font-size:14px; font-weight:600;
-    opacity:0; transition:all .25s; pointer-events:none; z-index:20; white-space:nowrap;
-  }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
-  .hl{border-left:4px solid var(--amber); padding-left:10px;}
-  .hidden{display:none !important;}
+:root{--bg:#0f1420;--card:#1a2233;--card2:#222d42;--txt:#eef2f7;--mut:#9aa7bd;--acc:#2fbf71;--acc2:#3aa0ff;--warn:#f5a623;--danger:#e5604f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#05070c;color:var(--txt);font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;display:flex;justify-content:center;min-height:100vh}
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+@media(min-width:480px){.phone{border-left:1px solid #1e2a3f;border-right:1px solid #1e2a3f}}
+.hdr{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1e2a3f;position:sticky;top:0;background:var(--bg);z-index:5}
+.hdr h1{font-size:18px;margin:0;flex:1}
+.back{background:none;border:0;color:var(--txt);font-size:22px;min-width:44px;min-height:44px;cursor:pointer}
+.icobtn{background:var(--card);border:1px solid #2b3a55;color:var(--txt);border-radius:12px;min-width:44px;min-height:44px;font-size:20px;cursor:pointer}
+.body{flex:1;padding:16px;overflow-y:auto;padding-bottom:90px}
+.card{background:var(--card);border:1px solid #24314a;border-radius:14px;padding:14px;margin-bottom:12px}
+.mut{color:var(--mut);font-size:13px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;background:var(--acc);color:#06130c;font-weight:700;font-size:16px;min-height:48px;cursor:pointer;margin-top:10px}
+.btn2{background:var(--card2);color:var(--txt);border:1px solid #33415c}
+.btnwarn{background:var(--warn);color:#241500}
+.link{background:none;border:0;color:var(--acc2);font-size:15px;min-height:44px;cursor:pointer;padding:8px}
+input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #33415c;background:#101827;color:var(--txt);font-size:16px;margin-top:6px}
+label{font-size:13px;color:var(--mut);display:block;margin-top:12px}
+.seg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;padding:12px;border-radius:10px;border:1px solid #33415c;background:var(--card2);color:var(--txt);font-size:15px;min-height:48px;cursor:pointer}
+.seg button.on{background:var(--acc);color:#06130c;border-color:var(--acc);font-weight:700}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:10px 14px;border-radius:999px;border:1px solid #33415c;background:var(--card2);font-size:14px;min-height:44px;cursor:pointer}
+.chip.on{background:var(--acc2);border-color:var(--acc2);color:#fff;font-weight:700}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #33415c;border-radius:10px;margin-top:8px;cursor:pointer;min-height:48px}
+.radio.on{border-color:var(--acc);background:#16281f}
+.radio input{width:20px;height:20px;margin:2px 0 0;flex-shrink:0}
+.stepdots{display:flex;gap:6px;margin:4px 0 14px}
+.stepdots span{flex:1;height:4px;border-radius:2px;background:#2b3a55}
+.stepdots span.done{background:var(--acc)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#131b2b;border-top:1px solid #24314a;display:flex;padding:6px 4px calc(8px + env(safe-area-inset-bottom))}
+.nav button{flex:1;background:none;border:0;color:var(--mut);font-size:11px;padding:8px 2px;min-height:56px;cursor:pointer}
+.nav button.on{color:var(--acc)}
+.nav button .ic{font-size:20px;display:block}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0c2b1a;border:1px solid var(--acc);color:var(--txt);padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;display:none;max-width:90%}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #2b3a55;font-size:14px}
+.kv:last-child{border-bottom:0}
+.bill{background:#fdfdf8;color:#1a1a1a;border-radius:12px;padding:18px;font-family:Georgia,serif}
+.bill h3{margin:0 0 10px;font-size:17px}
+.bill .bl{display:flex;justify-content:space-between;padding:5px 0;font-size:15px}
+.bill .tot{border-top:2px solid #1a1a1a;margin-top:8px;padding-top:8px;font-weight:700;font-size:17px}
+.calc{background:#0e1626;border:1px solid #2b3a55;border-radius:10px;padding:10px;margin-top:10px;font-size:12.5px;color:var(--mut)}
+.calc b{color:var(--txt)}
+.stepper{display:flex;align-items:center;gap:12px;margin-top:8px}
+.stepper button{width:48px;height:48px;border-radius:12px;border:1px solid #33415c;background:var(--card2);color:var(--txt);font-size:22px;cursor:pointer}
+.stepper .val{font-size:20px;min-width:40px;text-align:center;font-weight:700}
+.meterbox{border:1px solid #33415c;border-radius:12px;padding:12px;margin-top:10px;background:#141d30}
+.hrow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #24314a;border-radius:12px;margin-bottom:10px;background:var(--card);cursor:pointer;min-height:64px}
+.dp{width:46px;height:46px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.st{font-size:12px;padding:4px 10px;border-radius:999px}
+.paid{background:#0f2f1e;color:#4ade80}.due{background:#3a1d12;color:#f5a623}
+.tabrow{display:flex;gap:8px;margin-bottom:12px}
+.tabrow button{flex:1;padding:12px;border-radius:10px;border:1px solid #33415c;background:var(--card2);color:var(--mut);min-height:48px;font-size:15px;cursor:pointer}
+.tabrow button.on{background:var(--acc);color:#06130c;font-weight:700}
+.empty{text-align:center;padding:48px 20px;color:var(--mut)}
+.bigreg{font-size:18px;padding:18px;min-height:60px}
+.formula{background:#101a2e;border-left:3px solid var(--acc2);padding:8px 10px;font-size:12.5px;color:var(--mut);margin-top:6px;border-radius:0 8px 8px 0}
+h2.stitle{font-size:16px;margin:0 0 4px}
+.note{background:#0e1a2e;border:1px solid var(--acc2);border-radius:10px;padding:10px;font-size:13px;margin-top:10px}
 </style>
 </head>
 <body>
-<div class="phone" id="phone">
-
-  <!-- ============ 1. LOGIN ============ -->
-  <section class="screen active" id="scr-login">
-    <div class="body" style="padding-bottom:20px">
-      <div class="logo">R</div>
-      <h2 class="center" style="margin:4px 0 2px">RMS</h2>
-      <p class="center muted" style="margin:0 0 18px">Renter Management System</p>
-      <div class="card">
-        <label class="f" style="margin-top:0">Email / Phone</label>
-        <input type="tel" placeholder="03xx xxxxxxx">
-        <label class="f">Password</label>
-        <input type="password" placeholder="••••••••">
-        <button class="btn btn-p" onclick="go('scr-properties')">Login</button>
-        <button class="btn btn-s" onclick="go('scr-properties')">Sign up</button>
-        <button class="btn btn-s" onclick="go('scr-properties');toast('Local mode — sync disabled')" style="border-style:dashed">Skip for now →</button>
-      </div>
-      <p class="center"><a href="#" class="muted" style="font-size:13px" onclick="toast('Reset link sent');return false">Forgot password?</a></p>
-    </div>
-  </section>
-
-  <!-- ============ 2. PROPERTIES ============ -->
-  <section class="screen" id="scr-properties">
-    <div class="topbar"><h1>Properties</h1><button class="iconbtn" onclick="wizStart()">＋</button></div>
-    <div class="body">
-      <p class="sample">INTERACTIVE PROTOTYPE · sample data · tap a card</p>
-      <div class="card prop" onclick="go('scr-houses')">
-        <div class="row"><div class="meta"><span class="nm">R-15</span> <span class="badge">Apartment</span><div class="muted">3 floors · 12 houses</div></div><div class="due">Rs 45,000 due</div></div>
-      </div>
-      <div class="card prop" onclick="toast('Sample — R-09 houses')">
-        <div class="row"><div class="meta"><span class="nm">R-09</span> <span class="badge">Apartment</span><div class="muted">2 floors · 8 houses</div></div><div class="due">Rs 12,300 due</div></div>
-      </div>
-      <div class="card prop" onclick="toast('Sample — B-170 houses')">
-        <div class="row"><div class="meta"><span class="nm">B-170</span> <span class="badge">Shop</span><div class="muted">1 floor · 3 shops</div></div><div class="ok">All paid ✓</div></div>
-      </div>
-    </div>
-    <nav class="bottomnav">
-      <button class="on"><span class="e">🏠</span>Properties</button>
-      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
-      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
-    </nav>
-  </section>
-
-  <!-- ============ 3. REGISTER WIZARD ============ -->
-  <section class="screen" id="scr-wiz">
-    <div class="topbar"><button class="back" onclick="wizBack()">‹</button><h1>Register Property</h1></div>
-    <div class="body">
-      <div class="stepTag" id="wizTag">Step 1 of 7 · Type & basics</div>
-      <div class="steps" id="wizDots"><i class="done"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-
-      <div class="wizstep" id="w1">
-        <label class="f">Kya register kar rahe hain?</label>
-        <div class="chips" id="typeChips">
-          <button class="chip on" onclick="chipSingle(this)">Apartment</button>
-          <button class="chip" onclick="chipSingle(this)">Shop</button>
-          <button class="chip" onclick="chipSingle(this)">Other</button>
-        </div>
-        <label class="f">Naam</label><input type="text" placeholder="e.g. R-15" value="R-15">
-        <div class="btnrow" style="margin-top:12px">
-          <div style="flex:1"><label class="f" style="margin-top:0">Floors</label><input type="number" value="3"></div>
-          <div style="flex:1"><label class="f" style="margin-top:0">Houses / floor</label><input type="number" value="4"></div>
-        </div>
-      </div>
-
-      <div class="wizstep hidden" id="w2">
-        <label class="f">Sub-meters installed?</label>
-        <div class="card"><div class="row"><div class="meta"><b>Bijli sub-meters</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div></div>
-        <div class="card"><div class="row"><div class="meta"><b>Gas sub-meters</b></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div></div>
-        <label class="f">Sub-meter numbers (printed on meter)</label>
-        <input type="text" placeholder="KE sub-meter #1 number" style="margin-bottom:8px">
-        <input type="text" placeholder="KE sub-meter #2 number">
-      </div>
-
-      <div class="wizstep hidden" id="w3">
-        <p class="muted" style="font-size:13px">Official account numbers — future me <b>auto bill fetch</b> inhi par hoga.</p>
-        <label class="f">KE account number(s)</label>
-        <input type="text" placeholder="e.g. 0400012345678" style="margin-bottom:8px">
-        <input type="text" placeholder="+ add another">
-        <label class="f">SSGC customer number(s)</label>
-        <input type="text" placeholder="e.g. 1234567890">
-      </div>
-
-      <div class="wizstep hidden" id="w4">
-        <p class="muted" style="font-size:13px">Main meters — jinke behalf par bill fetch hoga.</p>
-        <label class="f">Main gas meter(s)</label>
-        <input type="text" placeholder="Meter label / number" style="margin-bottom:8px">
-        <label class="f">Main electricity meter(s)</label>
-        <input type="text" placeholder="Meter label / number">
-      </div>
-
-      <div class="wizstep hidden" id="w5">
-        <p class="muted" style="font-size:13px"><b>Ye meter kis ghar ke liye hai?</b> — multi-select (ek meter multiple gharon ke liye ho sakta hai).</p>
-        <label class="f">Main KE meter → houses</label>
-        <div class="chips">
-          <button class="chip on" onclick="this.classList.toggle('on')">A-01</button>
-          <button class="chip on" onclick="this.classList.toggle('on')">A-02</button>
-          <button class="chip" onclick="this.classList.toggle('on')">A-03</button>
-          <button class="chip" onclick="this.classList.toggle('on')">A-04</button>
-        </div>
-        <label class="f">Main gas meter → houses</label>
-        <div class="chips">
-          <button class="chip on" onclick="this.classList.toggle('on')">A-01</button>
-          <button class="chip" onclick="this.classList.toggle('on')">A-02</button>
-          <button class="chip" onclick="this.classList.toggle('on')">A-03</button>
-        </div>
-      </div>
-
-      <div class="wizstep hidden" id="w6">
-        <label class="f">Maintenance & extra charges</label>
-        <div class="card">
-          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Security charges</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-          <input type="number" placeholder="Rs / month" value="500">
-        </div>
-        <div class="card">
-          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Water charges</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-          <input type="number" placeholder="Rs / month" value="300">
-        </div>
-        <div class="card">
-          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Maintenance</b></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-          <input type="number" placeholder="Rs / month" value="150">
-        </div>
-        <div class="card">
-          <div class="row" style="margin-bottom:10px"><div class="meta"><b>Motor charges</b></div></div>
-          <div class="chips"><button class="chip on" onclick="chipSingle(this)">Fixed</button><button class="chip" onclick="chipSingle(this)">Variable</button></div>
-          <input type="number" placeholder="Rs / month" value="250" style="margin-top:8px">
-        </div>
-      </div>
-
-      <div class="wizstep hidden" id="w7">
-        <label class="f">Bill splitting — "how that works"</label>
-        <div class="card"><b>Electricity bill split</b>
-          <div class="chips"><button class="chip" onclick="chipSingle(this)">Equally</button><button class="chip on" onclick="chipSingle(this)">Sub-meter reading</button><button class="chip" onclick="chipSingle(this)">By persons</button></div>
-        </div>
-        <div class="card"><b>Gas bill split</b>
-          <div class="chips"><button class="chip on" onclick="chipSingle(this)">Equally</button><button class="chip" onclick="chipSingle(this)">Sub-meter reading</button><button class="chip" onclick="chipSingle(this)">By persons</button></div>
-        </div>
-      </div>
-
-      <div class="btnrow" style="margin-top:14px">
-        <button class="btn btn-s" id="wizBackBtn" onclick="wizBack()">Back</button>
-        <button class="btn btn-p" id="wizNextBtn" onclick="wizNext()">Next →</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ 4. HOUSES ============ -->
-  <section class="screen" id="scr-houses">
-    <div class="topbar"><button class="back" onclick="go('scr-properties')">‹</button><h1>R-15 · Houses</h1><button class="iconbtn">＋</button></div>
-    <div class="body">
-      <div class="card prop" onclick="go('scr-sheet')">
-        <div class="row"><div class="avatar">MA</div>
-          <div class="meta"><span class="nm">Mohsin Ali</span> <span class="muted">· B02</span><div class="muted">4 persons</div></div>
-          <div class="due">Rs 3,032 due</div></div>
-      </div>
-      <div class="card prop" onclick="toast('Sample house sheet')">
-        <div class="row"><div class="avatar" style="background:linear-gradient(135deg,#7c5cd6,#4a2fa0)">AK</div>
-          <div class="meta"><span class="nm">Ahmed Khan</span> <span class="muted">· A-01</span><div class="muted">3 persons</div></div>
-          <div class="ok">Paid ✓</div></div>
-      </div>
-      <div class="card prop" onclick="toast('Sample house sheet')">
-        <div class="row"><div class="avatar" style="background:linear-gradient(135deg,#d68a2c,#a05a1a)">SR</div>
-          <div class="meta"><span class="nm">Sara Raza</span> <span class="muted">· A-03</span><div class="muted">2 persons</div></div>
-          <div class="due">Rs 8,200 due</div></div>
-      </div>
-    </div>
-    <nav class="bottomnav">
-      <button class="on" onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
-      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
-      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
-    </nav>
-  </section>
-
-  <!-- ============ 5. HOUSE SHEET ============ -->
-  <section class="screen" id="scr-sheet">
-    <div class="topbar"><button class="back" onclick="go('scr-houses')">‹</button><h1>Mohsin Ali · B02</h1></div>
-    <div class="body">
-      <div class="card"><div class="row" style="justify-content:center">
-        <button class="iconbtn">‹</button><b>Sep 2026</b><button class="iconbtn">›</button>
-      </div></div>
-      <div class="card">
-        <label class="f" style="margin-top:0">Monthly Rent (Rs)</label><input type="number" value="0">
-        <label class="f">Adv of lease (Rs)</label><input type="number" placeholder="Advance held">
-        <label class="f">No. of Persons</label><input type="number" value="4">
-        <label class="f">Past Dues / Outstanding (Rs)</label>
-        <div class="hl"><input type="number" value="0"></div>
-      </div>
-      <div class="card">
-        <button class="btn btn-s" onclick="toast('Agreement viewer')">View / Add Agreement</button>
-        <button class="btn btn-s" onclick="toast('CNIC viewer')">View / Add CNIC</button>
-        <button class="btn btn-s" onclick="toast('Job cards')">Job Card</button>
-      </div>
-      <div class="card">
-        <b>Readings</b>
-        <div class="readrow"><input type="number" placeholder="KE sub-meter reading"><button class="photoBtn" onclick="toast('Gallery → meter photo attached')">📷</button></div>
-        <div class="readrow"><input type="number" placeholder="Gas sub-meter reading"><button class="photoBtn" onclick="toast('Gallery → meter photo attached')">📷</button></div>
-      </div>
-      <div class="card">
-        <label class="chk"><input type="checkbox" checked> This month charges</label>
-        <button class="btn btn-p" onclick="go('scr-bill')">Generate →</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ 6. BILL ============ -->
-  <section class="screen" id="scr-bill">
-    <div class="topbar"><button class="back" onclick="go('scr-sheet')">‹</button><h1>Bill · Sep 2026</h1></div>
-    <div class="body">
-      <div class="bill">
-        <div class="h">Mohsin Ali B02</div>
-        <div class="ln"><span>KE bill</span><span>2590</span></div>
-        <div class="ln"><span>Motor bill</span><span>250</span></div>
-        <div class="ln"><span>Gas bill</span><span>410</span></div>
-        <div class="ln"><span>Maintenance</span><span>150</span></div>
-        <div class="ln"><span>Prev extra</span><span class="neg">- 368</span></div>
-        <div class="tot"><span>Total</span><span>3032</span></div>
-      </div>
-      <div class="btnrow" style="margin-top:12px">
-        <button class="btn btn-p" onclick="toast('Opening WhatsApp share…')">WhatsApp</button>
-        <button class="btn btn-s" onclick="toast('PDF exported')">PDF</button>
-      </div>
-      <button class="btn btn-s" onclick="toast('Marked paid — dues cleared')">Mark paid</button>
-      <p class="muted center" style="font-size:12px;margin-top:10px">Template format — lines dynamic per house</p>
-    </div>
-  </section>
-
-  <!-- ============ 7. COLLECTION ============ -->
-  <section class="screen" id="scr-collection">
-    <div class="topbar"><h1>Collection · Sep 2026</h1></div>
-    <div class="body">
-      <div class="tabs">
-        <button class="on" id="tabB" onclick="ctab('b')">Building-wise</button>
-        <button id="tabH" onclick="ctab('h')">House-wise</button>
-      </div>
-      <div id="cB">
-        <div class="card"><div class="row"><div class="meta"><b>R-15</b><div class="muted">Expected 1,20,000 · Collected 80,000</div><div class="bar"><i style="width:67%"></i></div></div><div class="due">40,000 pending</div></div></div>
-        <div class="card"><div class="row"><div class="meta"><b>R-09</b><div class="muted">Expected 64,000 · Collected 51,700</div><div class="bar"><i style="width:81%"></i></div></div><div class="due">12,300 pending</div></div></div>
-        <div class="card"><div class="row"><div class="meta"><b>B-170</b><div class="muted">Expected 30,000 · Collected 30,000</div><div class="bar"><i style="width:100%"></i></div></div><div class="ok">Done ✓</div></div></div>
-        <div class="card"><div class="row"><div class="meta"><b>TOTAL</b></div></div><div class="row" style="margin-top:6px"><span class="muted">Collected</span><b>1,61,700</b></div><div class="row"><span class="muted">Pending</span><b class="due">52,300</b></div></div>
-      </div>
-      <div id="cH" class="hidden">
-        <div class="card"><div class="row"><div class="avatar">MA</div><div class="meta"><b>Mohsin Ali · B02</b><div class="muted">R-15</div></div><div class="due">3,032 due</div></div></div>
-        <div class="card"><div class="row"><div class="avatar" style="background:linear-gradient(135deg,#7c5cd6,#4a2fa0)">AK</div><div class="meta"><b>Ahmed Khan · A-01</b><div class="muted">R-15</div></div><div class="ok">Paid ✓</div></div></div>
-        <div class="card"><div class="row"><div class="avatar" style="background:linear-gradient(135deg,#d68a2c,#a05a1a)">SR</div><div class="meta"><b>Sara Raza · A-03</b><div class="muted">R-15</div></div><div class="due">8,200 due</div></div></div>
-      </div>
-    </div>
-    <nav class="bottomnav">
-      <button onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
-      <button class="on"><span class="e">📊</span>Collection</button>
-      <button onclick="go('scr-settings')"><span class="e">⚙️</span>Settings</button>
-    </nav>
-  </section>
-
-  <!-- ============ 8. SETTINGS ============ -->
-  <section class="screen" id="scr-settings">
-    <div class="topbar"><h1>Settings</h1></div>
-    <div class="body">
-      <div class="card">
-        <div class="setrow"><div class="t"><b>Dark mode</b></div><button class="toggle" id="darkT" onclick="document.body.classList.toggle('dark');this.classList.toggle('on')"></button></div>
-        <div class="setrow" onclick="toast('Language: English / اردو')"><div class="t"><b>Language</b><small>English</small></div><span class="muted">›</span></div>
-        <div class="setrow" onclick="toast('Checking for updates…')"><div class="t"><b>Check for update</b><small>v3.0 prototype</small></div><span class="muted">›</span></div>
-        <div class="setrow" onclick="toast('Exporting backup…')"><div class="t"><b>Export app data</b><small>Local JSON backup</small></div><span class="muted">›</span></div>
-        <div class="setrow" onclick="toast('Importing backup…')"><div class="t"><b>Import app data</b><small>Restore from file</small></div><span class="muted">›</span></div>
-      </div>
-      <div class="card">
-        <div class="setrow"><div class="t"><b>Sync data (Supabase)</b><small id="syncLbl">Last synced: 2 min ago · auto every 1 min</small></div></div>
-        <button class="btn btn-p" onclick="document.getElementById('syncLbl').textContent='Last synced: just now · auto every 1 min';toast('Synced ✓')">Sync now</button>
-      </div>
-    </div>
-    <nav class="bottomnav">
-      <button onclick="go('scr-properties')"><span class="e">🏠</span>Properties</button>
-      <button onclick="go('scr-collection')"><span class="e">📊</span>Collection</button>
-      <button class="on"><span class="e">⚙️</span>Settings</button>
-    </nav>
-  </section>
-
+<div class="phone">
+  <div id="app"></div>
   <div class="toast" id="toast"></div>
 </div>
-
 <script>
-  function go(id){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.getElementById(id).querySelector('.body').scrollTop = 0;
+/* ============ RMS Prototype v2 — blank-first, rebuilt per Hasnain's review ============ */
+const S = {
+  screen:'login', tab:'home',
+  lang:'en',
+  prop:null, houses:[], bills:{},
+  wz:{step:1}, collTab:'bld', collMonth:'Sep 2026',
+  lastSync:null, seq:1
+};
+const L = {
+en:{app:'RMS',home:'Properties',houses:'Houses',coll:'Collection',set:'Settings',reg:'Register a Property',skip:'Skip for now',login:'Log in',signup:'Sign up',forgot:'Forgot password?',noProp:'No properties yet',noPropSub:'Register your first property to get started.',create:'Create account',have:'Already have an account? Log in',need:'Need an account? Sign up'},
+ur:{app:'آر ایم ایس',home:'پراپرٹیز',houses:'مکانات',coll:'وصولی',set:'سیٹنگز',reg:'پراپرٹی رجسٹر کریں',skip:'ابھی چھوڑیں',login:'لاگ اِن',signup:'سائن اپ',forgot:'پاس ورڈ بھول گئے؟',noProp:'ابھی کوئی پراپرٹی نہیں',noPropSub:'شروع کرنے کے لیے اپنی پہلی پراپرٹی رجسٹر کریں۔',create:'اکاؤنٹ بنائیں',have:'پہلے سے اکاؤنٹ ہے؟ لاگ اِن کریں',need:'اکاؤنٹ چاہیے؟ سائن اپ کریں'}};
+const T = k => (L[S.lang]&&L[S.lang][k])||L.en[k]||k;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function go(sc,param){S.screen=sc;S._p=param;render();window.scrollTo(0,0);}
+function tab(t){S.tab=t;S.screen='main';render();window.scrollTo(0,0);}
+const $=id=>document.getElementById(id);
+
+/* ---------- LOGIN / SIGNUP (forms, not straight into app) ---------- */
+function vLogin(){return `<div class="body" style="display:flex;flex-direction:column;justify-content:center">
+<div style="text-align:center;margin-bottom:26px"><div style="font-size:52px">🏠</div><h1 style="margin:8px 0 2px">RMS</h1><div class="mut">Renter Management System</div></div>
+<div class="card"><label>Phone number</label><input id="li_ph" inputmode="tel" placeholder="03xx xxxxxxx">
+<label>Password</label><input id="li_pw" type="password" placeholder="••••••••">
+<button class="btn" onclick="doLogin()">${T('login')}</button>
+<div style="text-align:center"><button class="link" onclick="toast('Password reset link sent to your phone')">🔑 ${T('forgot')}</button></div></div>
+<div style="text-align:center;margin-top:6px"><button class="link" onclick="go('signup')">${T('need')}</button><br>
+<button class="link" onclick="enterApp()" style="color:var(--mut)">${T('skip')} →</button></div></div>`;}
+function doLogin(){if(!$('li_ph').value.trim()){toast('Please enter phone number');return;}if(!$('li_pw').value){toast('Please enter password');return;}enterApp();}
+function vSignup(){return `<div class="body" style="display:flex;flex-direction:column;justify-content:center">
+<div style="text-align:center;margin-bottom:20px"><div style="font-size:46px">📝</div><h1 style="margin:8px 0 2px">${T('signup')}</h1></div>
+<div class="card"><label>Full name</label><input id="su_nm" placeholder="Your name">
+<label>Phone number</label><input id="su_ph" inputmode="tel" placeholder="03xx xxxxxxx">
+<label>Password</label><input id="su_pw" type="password" placeholder="Choose a password">
+<button class="btn" onclick="doSignup()">${T('create')}</button></div>
+<div style="text-align:center"><button class="link" onclick="go('login')">← ${T('have')}</button></div></div>`;}
+function doSignup(){if(!$('su_nm').value.trim()||!$('su_ph').value.trim()){toast('Please fill name and phone');return;}toast('Account created. Welcome!');enterApp();}
+function enterApp(){S.screen='main';S.tab='home';render();}
+
+/* ---------- MAIN SHELL ---------- */
+function shell(inner){
+  const nav=[['home','🏢',T('home')],['houses','🚪',T('houses')],['coll','🧾',T('coll')],['set','⚙️',T('set')]];
+  return `<div class="hdr"><h1>${T('app')}</h1><button class="icobtn" onclick="tab('set')" title="${T('set')}">⚙️</button></div>
+  <div class="body">${inner}</div>
+  <div class="nav">${nav.map(n=>`<button class="${S.tab===n[0]?'on':''}" onclick="tab('${n[0]}')"><span class="ic">${n[1]}</span>${n[2]}</button>`).join('')}</div>`;
+}
+
+/* ---------- HOME (blank-first: Register + Settings, no pre-filled data) ---------- */
+function vHome(){
+  if(!S.prop) return shell(`<div class="empty"><div style="font-size:56px">🏘️</div>
+    <h2>${T('noProp')}</h2><p>${T('noPropSub')}</p>
+    <button class="btn bigreg" onclick="startWz()">＋ ${T('reg')}</button></div>`);
+  const p=S.prop, n=S.houses.length, due=S.houses.filter(h=>h.status!=='paid').length;
+  return shell(`<div class="card"><div class="row"><div class="grow"><h2 class="stitle">🏢 ${esc(p.name)}</h2>
+  <div class="mut">${esc(p.type)} · ${p.floors} floor(s) · ${n} house(s)</div>
+  <div class="kv" style="margin-top:8px"><span>Outstanding this month</span><b>${due} house(s) due</b></div></div></div>
+  <button class="btn btn2" onclick="tab('houses')">Open →</button></div>
+  <button class="btn btn2" onclick="startWz()">＋ ${T('reg')} (another)</button>`);
+}
+</script>
+</body>
+</html>
+<script>
+/* ================= REGISTRATION WIZARD (9 steps, English labels) ================= */
+function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};go('wizard');}
+function wzDots(n,cur){let s='<div class="stepdots">';for(let i=1;i<=n;i++)s+=`<span class="${i<=cur?'done':''}"></span>`;return s+'</div>';}
+function wzBar(title,step){return `<div class="hdr"><button class="back" onclick="wzBack()">←</button><h1>${title}</h1><div class="mut">Step ${step}/9</div></div>`;}
+function wzBack(){if(S.wz.step>1){S.wz.step--;go('wizard');}else{tab('home');}}
+function wzNext(){
+  const w=S.wz;
+  if(w.step===2&&!w.name.trim()){toast('Please enter property name');return;}
+  if(w.step===4){for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||{n:1,names:[]};if(!fh.n||fh.n<1){toast('Floor '+(f+1)+': set number of houses');return;}}}
+  if(w.step<9){w.step++;go('wizard');}else finishWz();
+}
+function wzNextBtn(lbl){return `<button class="btn" onclick="wzNext()">${lbl||'Next →'}</button>`;}
+function flatHouses(){const w=S.wz,out=[];for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||{n:1,names:[]};const n=fh.n||1;for(let i=0;i<n;i++){out.push({floor:f+1,idx:i,code:(fh.names&&fh.names[i])||'',key:f+'-'+i});}}return out;}
+
+function vWizard(){const w=S.wz;
+  let inner='';
+  if(w.step===1){inner=`${wzDots(9,1)}<h2 class="stitle">Property type</h2><div class="mut">What kind of property is this?</div>
+  <div class="seg">${['Apartment','Shop','Other'].map(t=>`<button class="${w.type===t?'on':''}" onclick="S.wz.type='${t}';go('wizard')">${t}</button>`).join('')}</div>`;}
+  if(w.step===2){inner=`${wzDots(9,2)}<h2 class="stitle">Property name</h2><div class="mut">e.g. R-15, Gulshan Block 4</div>
+  <label>Property name</label><input id="w_name" value="${esc(w.name)}" placeholder="R-15" oninput="S.wz.name=this.value">`;}
+  if(w.step===3){inner=`${wzDots(9,3)}<h2 class="stitle">Floors</h2><div class="mut">How many floors does the building have?</div>
+  <div class="stepper"><button onclick="S.wz.floors=Math.max(1,S.wz.floors-1);go('wizard')">−</button><div class="val">${w.floors}</div><button onclick="S.wz.floors=Math.min(10,S.wz.floors+1);go('wizard')">＋</button></div>`;}
+  if(w.step===4){let h='';for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[]});const n=fh.n||1;
+    h+=`<div class="card"><div class="row"><div class="grow"><b>Floor ${f+1}</b><div class="mut">Houses on this floor</div></div>
+    <div class="stepper"><button onclick="wzFloorN(${f},-1)">−</button><div class="val">${n}</div><button onclick="wzFloorN(${f},1)">＋</button></div></div>`;
+    for(let i=0;i<n;i++){h+=`<label>House ${i+1} name / code</label><input value="${esc(fh.names[i]||'')}" placeholder="e.g. ${esc(w.name||'R-15')}-F${f+1}H${i+1}" oninput="S.wz.floorHouses[${f}].names[${i}]=this.value">`;}
+    h+='</div>';}
+    inner=`${wzDots(9,4)}<h2 class="stitle">Houses per floor</h2><div class="mut">Each floor can have a different number of houses.</div>`+h;}
+  if(w.step===5){const hs=flatHouses();let h='';
+    hs.forEach((hh,i)=>{const m=w.houseMeters[i]||(w.houseMeters[i]={e:false,g:false,eNo:'',gNo:''});
+    h+=`<div class="card"><b>${esc(hh.code||('Floor '+hh.floor+' · House '+(hh.idx+1)))}</b>
+    <label>Electricity sub-meter installed?</label><div class="seg"><button class="${m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=true;go('wizard')">Yes</button><button class="${!m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=false;go('wizard')">No</button></div>
+    ${m.e?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.eNo)}" placeholder="e.g. SN-45218" oninput="S.wz.houseMeters[${i}].eNo=this.value">`:''}
+    <label>Gas sub-meter installed?</label><div class="seg"><button class="${m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=true;go('wizard')">Yes</button><button class="${!m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=false;go('wizard')">No</button></div>
+    ${m.g?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.gNo)}" placeholder="e.g. SN-77120" oninput="S.wz.houseMeters[${i}].gNo=this.value">`:''}</div>`;});
+    inner=`${wzDots(9,5)}<h2 class="stitle">Sub-meters per house</h2><div class="mut">For every house: does it have its own sub-meter? Enter the printed serial number from the meter.</div>`+h;}
+  if(w.step===6){const hs=flatHouses();
+    const meterSec=(title,key,ph)=>{let h=`<div class="card"><h2 class="stitle">${title}</h2><div class="mut">Add as many as installed. For each meter, select which house(s) it serves.</div>`;
+    w[key].forEach((m,mi)=>{h+=`<div class="meterbox"><div class="row"><div class="grow"><label style="margin-top:0">Meter ${mi+1} number</label></div>${w[key].length>1?`<button class="icobtn" onclick="wzMeterDel('${key}',${mi})">✕</button>`:''}</div>
+      <input value="${esc(m.no)}" placeholder="${ph}" oninput="S.wz['${key}'][${mi}].no=this.value">
+      <label>Which house(s) does this meter serve? (tap all that share it)</label><div class="chips">
+      ${hs.map((hh,hi)=>`<button class="chip ${m.houses.includes(hi)?'on':''}" onclick="wzMeterShare('${key}',${mi},${hi})">${esc(hh.code||('F'+hh.floor+'H'+(hh.idx+1)))}</button>`).join('')}</div></div>`;});
+    h+=`<button class="btn btn2" onclick="S.wz['${key}'].push({no:'',houses:[]});go('wizard')">＋ Add another meter</button></div>`;return h;};
+    inner=`${wzDots(9,6)}<h2 class="stitle">Official meters</h2>`+meterSec('⚡ KE account numbers','keMeters','e.g. 040012345678')+meterSec('🔥 SSGC customer numbers','gasMeters','e.g. 1234567890');}
+  if(w.step===7){const CH=[['sec','Security charges'],['water','Water charges'],['maint','Maintenance'],['motor','Motor / common']];
+    inner=`${wzDots(9,7)}<h2 class="stitle">Fixed / variable charges</h2><div class="mut">For each charge choose: none, a fixed monthly amount, or variable.</div>`+
+    CH.map(([k,nm])=>{const c=w.charges[k];
+    return `<div class="card"><b>${nm}</b><div class="seg">${['none','fixed','variable'].map(m=>`<button class="${c.mode===m?'on':''}" onclick="S.wz.charges.${k}.mode='${m}';go('wizard')">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+    ${c.mode==='fixed'?`<label>Fixed monthly amount (Rs)</label><input type="number" inputmode="numeric" value="${esc(c.amt)}" placeholder="e.g. 500" oninput="S.wz.charges.${k}.amt=this.value">`:''}
+    ${c.mode==='variable'?`<label>If variable, how should the app calculate each house's share?</label>
+      ${[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents. Bigger families pay more.'],['submeter','By sub-meter reading','Each house pays in proportion to its meter units: total × (house units ÷ all units).']].map(([m,t,f])=>`
+      <div class="radio ${c.method===m?'on':''}" onclick="S.wz.charges.${k}.method='${m}';go('wizard')"><input type="radio" ${c.method===m?'checked':''}><div><b>${t}</b><div class="formula">${f}</div></div></div>`).join('')}`:''}</div>`;}).join('');}
+  if(w.step===8){const ruleRow=(lbl,key)=>`<div class="card"><b>${lbl}</b>
+    ${[['equal','Split equally per house'],['submeter','By sub-meter reading'],['person','Per person (resident count)']].map(([m,t])=>`
+    <div class="radio ${w[key]===m?'on':''}" onclick="S.wz.${key}='${m}';go('wizard')"><input type="radio" ${w[key]===m?'checked':''}><div><b>${t}</b></div></div>`).join('')}</div>`;
+    inner=`${wzDots(9,8)}<h2 class="stitle">Bill split rules</h2>
+    <div class="note">📌 These settings are <b>saved for this property</b> and applied <b>automatically every month</b> when you tap Generate Bill. The bill shows the full calculation so you can verify.</div>`
+    +ruleRow('⚡ Electricity bill split','eRule')+ruleRow('🔥 Gas bill split','gRule');}
+  if(w.step===9){const hs=flatHouses();
+    inner=`${wzDots(9,9)}<h2 class="stitle">Review</h2><div class="card">
+    <div class="kv"><span>Type</span><b>${esc(w.type)}</b></div>
+    <div class="kv"><span>Name</span><b>${esc(w.name)}</b></div>
+    <div class="kv"><span>Floors</span><b>${w.floors}</b></div>
+    <div class="kv"><span>Total houses</span><b>${hs.length}</b></div>
+    <div class="kv"><span>KE meters</span><b>${w.keMeters.filter(m=>m.no).length}</b></div>
+    <div class="kv"><span>SSGC meters</span><b>${w.gasMeters.filter(m=>m.no).length}</b></div>
+    <div class="kv"><span>Electricity split</span><b>${w.eRule}</b></div>
+    <div class="kv"><span>Gas split</span><b>${w.gRule}</b></div></div>
+    <div class="mut">Houses: ${hs.map(h=>esc(h.code||('F'+h.floor+'H'+(h.idx+1)))).join(', ')}</div>`;}
+  return `${wzBar('Register Property',w.step)}<div class="body">${inner}${wzNextBtn(w.step===9?'✓ Finish & Create Property':null)}</div>`;
+}
+function wzFloorN(f,d){const w=S.wz;const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[]});fh.n=Math.min(8,Math.max(1,(fh.n||1)+d));go('wizard');}
+function wzMeterDel(key,mi){S.wz[key].splice(mi,1);go('wizard');}
+function wzMeterShare(key,mi,hi){const a=S.wz[key][mi].houses;const i=a.indexOf(hi);if(i>=0)a.splice(i,1);else a.push(hi);go('wizard');}
+function finishWz(){const w=S.wz,hs=flatHouses();
+  S.prop={name:w.name,type:w.type,floors:w.floors,keMeters:w.keMeters.filter(m=>m.no),gasMeters:w.gasMeters.filter(m=>m.no),charges:w.charges,eRule:w.eRule,gRule:w.gRule};
+  S.houses=hs.map((h,i)=>{const m=w.houseMeters[i]||{};return{id:'h'+(++S.seq),code:h.code||((w.name||'P')+'-F'+h.floor+'H'+(h.idx+1)),floor:h.floor,tenant:'',residents:0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:m.eNo||'',subG:m.gNo||'',prevE:0,prevG:0,status:'due'};});
+  toast('Property "'+w.name+'" registered');tab('home');}
+</script>
+<script>
+/* ================= HOUSES (＋ works) ================= */
+function vHouses(){
+  if(!S.prop) return shell(`<div class="empty"><div style="font-size:52px">🏢</div><p>Register a property first.</p><button class="btn" onclick="startWz()">＋ ${T('reg')}</button></div>`);
+  const rows=S.houses.map(h=>`<div class="hrow" onclick="go('sheet','${h.id}')">
+    <div class="dp">${esc((h.tenant||h.code||'?')[0].toUpperCase())}</div>
+    <div class="grow"><b>${esc(h.tenant||'(vacant)')}</b><div class="mut">${esc(h.code)} · Floor ${h.floor} · ${h.residents} person(s)</div></div>
+    <span class="st ${h.status==='paid'?'paid':'due'}">${h.status==='paid'?'Paid':'Due'}</span></div>`).join('');
+  return shell(`<div class="row" style="margin-bottom:12px"><h2 class="stitle grow">Houses · ${esc(S.prop.name)}</h2><button class="icobtn" onclick="addHouseForm()" title="Add house">＋</button></div>
+  <div id="addh"></div>${rows||'<div class="empty">No houses yet — tap ＋ to add.</div>'}`);
+}
+function addHouseForm(){$('addh').innerHTML=`<div class="card"><b>Add house</b>
+  <label>House code</label><input id="ah_code" placeholder="e.g. ${esc(S.prop.name)}-A">
+  <label>Tenant name</label><input id="ah_tenant" placeholder="e.g. Ahmed Khan">
+  <label>Residents (person count)</label><input id="ah_res" type="number" inputmode="numeric" placeholder="0">
+  <div class="row"><button class="btn btn2 grow" onclick="$('addh').innerHTML=''">Cancel</button><button class="btn grow" onclick="addHouse()">Add</button></div></div>`;}
+function addHouse(){const code=$('ah_code').value.trim()||('H'+(S.houses.length+1));
+  S.houses.push({id:'h'+(++S.seq),code,floor:1,tenant:$('ah_tenant').value.trim(),residents:+$('ah_res').value||0,rent:0,advance:0,priorDues:0,prevExtra:0,subE:'',subG:'',prevE:0,prevG:0,curE:'',curG:'',status:'due'});
+  toast('House '+code+' added');tab('houses');}
+const H=id=>S.houses.find(h=>h.id===id);
+
+/* ================= MONTHLY HOUSE SHEET ================= */
+function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
+  const p=S.prop;
+  const meterRow=(lbl,sub,prev,cur,ph)=>sub?`<div class="card"><b>${lbl}</b><div class="mut">Sub-meter: ${esc(sub)} · Last: ${prev}</div>
+  <label>Current reading</label><input id="${ph}" type="number" inputmode="numeric" value="${esc(cur)}" placeholder="Enter reading">
+  <button class="btn btn2" onclick="toast('Meter photo attached (demo)')">📷 Attach meter photo</button></div>`:'';
+  const varCharge=k=>p.charges[k].mode==='variable'?`<label>Total ${k} bill this month (Rs) — will split ${p.charges[k].method}</label><input id="vt_${k}" type="number" inputmode="numeric" placeholder="e.g. 3000">`:'';
+  return `${sheetBar('Monthly Sheet · '+h.code)}<div class="body">
+  <div class="card"><div class="row"><div class="dp">${esc((h.tenant||h.code)[0].toUpperCase())}</div>
+  <div class="grow"><label style="margin-top:0">Tenant name</label><input id="sh_tenant" value="${esc(h.tenant)}" oninput="H('${h.id}').tenant=this.value" style="margin-top:2px"></div></div>
+  <div class="row"><div class="grow"><label>Residents</label><input id="sh_res" type="number" value="${h.residents}" oninput="H('${h.id}').residents=+this.value||0"></div>
+  <div class="grow"><label>Rent (Rs)</label><input id="sh_rent" type="number" value="${h.rent}" oninput="H('${h.id}').rent=+this.value||0"></div></div>
+  <div class="row"><div class="grow"><label>Lease advance</label><input type="number" value="${h.advance}" oninput="H('${h.id}').advance=+this.value||0"></div>
+  <div class="grow"><label>Prior dues (Rs)</label><input type="number" value="${h.priorDues}" oninput="H('${h.id}').priorDues=+this.value||0"></div></div>
+  <label>Previous extra / credit (Rs) — negative = credit, e.g. -368</label><input type="number" value="${h.prevExtra}" oninput="H('${h.id}').prevExtra=+this.value||0">
+  <div class="row" style="margin-top:10px"><button class="btn btn2 grow" onclick="toast('Agreement viewer (demo)')">📄 Agreement</button><button class="btn btn2 grow" onclick="toast('CNIC viewer (demo)')">🪪 CNIC</button><button class="btn btn2 grow" onclick="toast('Job card (demo)')">🧰 Job Card</button></div></div>
+  ${meterRow('⚡ Electricity',h.subE,h.prevE,h.curE,'curE')}
+  ${meterRow('🔥 Gas',h.subG,h.prevG,h.curG,'curG')}
+  <div class="card"><h2 class="stitle">This month's totals</h2>
+  <label>Total KE bill (Rs)</label><input id="t_ke" type="number" inputmode="numeric" placeholder="e.g. 5000">
+  <label>Total gas bill (Rs)</label><input id="t_gas" type="number" inputmode="numeric" placeholder="e.g. 2000">
+  ${['sec','water','maint','motor'].map(varCharge).join('')}
+  <div class="note">📌 Split rules saved for ${esc(p.name)}: electricity = <b>${p.eRule}</b>, gas = <b>${p.gRule}</b>. They apply automatically below.</div></div>
+  <button class="btn" onclick="genBill('${h.id}')">🧾 Generate Bill</button>
+  <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
+}
+function sheetBar(t){return `<div class="hdr"><button class="back" onclick="tab('houses')">←</button><h1 style="font-size:15px">${esc(t)}</h1></div>`;}
+
+/* ---------- Bill engine: applies saved split rules ---------- */
+function share(total,rule,h,hs,units,sumU,totRes){
+  if(!(total>0))return 0;
+  if(rule==='equal'||hs.length===0)return total/hs.length;
+  if(rule==='person')return totRes>0?total*(+h.residents||0)/totRes:total/hs.length;
+  if(rule==='submeter')return sumU>0?total*units/sumU:total/hs.length;
+  return total/hs.length;
+}
+function genBill(id){const h=H(id),p=S.prop,hs=S.houses;
+  h.curE=$('curE')?+$('curE').value||0:h.curE; h.curG=$('curG')?+$('curG').value||0:h.curG;
+  const keTot=+$('t_ke').value||0, gasTot=+$('t_gas').value||0;
+  const units=hs.map(x=>Math.max(0,(+x.curE||0)-(+x.prevE||0)));
+  const gunits=hs.map(x=>Math.max(0,(+x.curG||0)-(+x.prevG||0)));
+  const sumU=units.reduce((a,b)=>a+b,0), sumGU=gunits.reduce((a,b)=>a+b,0), totRes=hs.reduce((a,x)=>a+(+x.residents||0),0);
+  const ui=hs.indexOf(h);
+  const eShare=share(keTot,p.eRule,h,hs,units[ui],sumU,totRes);
+  const gShare=share(gasTot,p.gRule,h,hs,gunits[ui],sumGU,totRes);
+  const lines=[],calc=[];
+  if(h.rent>0)lines.push(['Rent',h.rent]);
+  if(keTot>0){lines.push(['KE bill',Math.round(eShare)]);calc.push(`<b>⚡ KE Rs ${keTot}</b> split <b>${p.eRule}</b> → Rs ${Math.round(eShare)}`);}
+  if(gasTot>0){lines.push(['Gas bill',Math.round(gShare)]);calc.push(`<b>🔥 Gas Rs ${gasTot}</b> split <b>${p.gRule}</b> → Rs ${Math.round(gShare)}`);}
+  const CN={sec:'Security',water:'Water',maint:'Maintenance',motor:'Motor'};
+  for(const k of['sec','water','maint','motor']){const c=p.charges[k];let amt=0,how='';
+    if(c.mode==='fixed'){amt=+c.amt||0;how='fixed Rs '+amt;}
+    else if(c.mode==='variable'){const t=+$('vt_'+k).value||0;
+      if(c.method==='equal'){amt=t/hs.length;how=`variable Rs ${t} ÷ ${hs.length} houses`;}
+      else if(c.method==='person'){amt=totRes>0?t*(+h.residents||0)/totRes:0;how=`variable Rs ${t} × ${h.residents}/${totRes} persons`;}
+      else{amt=sumU>0?t*units[ui]/sumU:0;how=`variable Rs ${t} × ${units[ui]}/${sumU} units`};}
+    if(amt>0){lines.push([CN[k]+(c.mode==='variable'?' (variable)':''),Math.round(amt)]);calc.push(`<b>${CN[k]} Rs ${Math.round(amt)}</b> — ${how} (saved rule)`);}}
+  if(h.priorDues>0)lines.push(['Prior dues',h.priorDues]);
+  if(h.prevExtra)lines.push(['Prev extra',h.prevExtra]);
+  const total=Math.round(lines.reduce((a,l)=>a+l[1],0));
+  S.bills[id]={lines,total,calc,tenant:h.tenant||h.code,code:h.code,month:S.collMonth};
+  h.status='due';go('bill',id);}
+
+/* ================= BILL (Hasnain's template + breakdown) ================= */
+function vBill(id){const b=S.bills[id];if(!b)return shell('<p>No bill yet</p>');
+  const txt=`${b.tenant} ${b.code}\n\n`+b.lines.map(l=>`${l[0]} ${l[1]}`).join('\n')+`\n\nTotal ${b.total}`;
+  return `${sheetBar('Bill · '+b.code)}<div class="body">
+  <div class="bill"><h3>${esc(b.tenant)} ${esc(b.code)}</h3>
+  ${b.lines.map(l=>`<div class="bl"><span>${esc(l[0])}</span><span>${l[1]}</span></div>`).join('')}
+  <div class="bl tot"><span>Total</span><span>${b.total}</span></div></div>
+  <div class="calc"><b>How this was calculated (saved property rules applied):</b><br>${b.calc.join('<br>')||'No variable splits this month.'}</div>
+  <div class="row"><button class="btn btn2 grow" onclick="toast('Opening WhatsApp with bill text (demo)')">📲 WhatsApp</button>
+  <button class="btn btn2 grow" onclick="toast('Bill PDF saved (demo)')">📄 PDF</button></div>
+  <button class="btn" onclick="H('${id}').status='paid';toast('Marked paid');tab('coll')">✓ Mark paid</button>
+  <button class="btn btn2" onclick="go('sheet','${id}')">← Back to sheet</button></div>`;
+}
+</script>
+<style>
+body.light{--bg:#eef2f7;--card:#ffffff;--card2:#e4eaf3;--txt:#14202f;--mut:#5b6b82}
+body.light .bill{background:#ffffff}
+body.light input,body.light select{background:#f4f7fb;color:#14202f;border-color:#c6d2e2}
+body.light .hdr{background:#eef2f7}
+body.light .nav{background:#ffffff}
+body.light .kv{border-color:#d5dde8}
+body.light .calc{background:#f4f7fb;color:#5b6b82}
+body.light .calc b{color:#14202f}
+body.light .meterbox{background:#f4f7fb}
+body.light .formula{background:#eef4fd}
+body.light .note{background:#eaf2ff}
+body.light .radio.on{background:#e6f6ec}
+body.light .toast{background:#e6f6ec;color:#14202f}
+</style>
+<script>
+/* ================= COLLECTION (rows are clickable) ================= */
+function vColl(){
+  if(!S.prop) return shell(`<div class="empty"><div style="font-size:52px">🧾</div><p>Register a property first.</p><button class="btn" onclick="startWz()">＋ ${T('reg')}</button></div>`);
+  const amt=h=>S.bills[h.id]?S.bills[h.id].total:(h.rent||0);
+  const exp=S.houses.reduce((a,h)=>a+amt(h),0);
+  const col=S.houses.filter(h=>h.status==='paid').reduce((a,h)=>a+amt(h),0);
+  const pct=exp>0?Math.round(col/exp*100):0;
+  const tabs=`<div class="tabrow"><button class="${S.collTab==='bld'?'on':''}" onclick="S.collTab='bld';render()">Building-wise</button><button class="${S.collTab==='house'?'on':''}" onclick="S.collTab='house';render()">House-wise</button></div>`;
+  const msel=`<label>Month</label><select onchange="S.collMonth=this.value;render()">${['Sep 2026','Aug 2026','Jul 2026'].map(m=>`<option ${S.collMonth===m?'selected':''}>${m}</option>`).join('')}</select>`;
+  let body='';
+  if(S.collTab==='bld'){
+    body=`<div class="hrow" onclick="tab('houses')"><div class="dp">🏢</div><div class="grow"><b>${esc(S.prop.name)}</b>
+    <div class="mut">Expected Rs ${exp} · Collected Rs ${col} · Pending Rs ${exp-col}</div>
+    <div style="background:#2b3a55;border-radius:6px;height:8px;margin-top:6px"><div style="width:${pct}%;background:var(--acc);height:8px;border-radius:6px"></div></div></div>
+    <b>${pct}%</b></div><div class="mut">Tap a building to open its houses →</div>`;
+  }else{
+    body=S.houses.map(h=>{const a=amt(h);return `<div class="hrow" onclick="go('sheet','${h.id}')">
+    <div class="dp">${esc((h.tenant||h.code)[0].toUpperCase())}</div>
+    <div class="grow"><b>${esc(h.tenant||'(vacant)')}</b><div class="mut">${esc(S.prop.name)} · ${esc(h.code)}</div></div>
+    <div style="text-align:right"><b>Rs ${a||'—'}</b><br><span class="st ${h.status==='paid'?'paid':'due'}">${h.status==='paid'?'Paid':'Due'}</span></div></div>`;}).join('')
+    +`<div class="mut">Tap a house to open its monthly sheet →</div>`;
   }
-  let toastT;
-  function toast(msg){
-    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
-  }
-  // wizard
-  const wNames=["Step 1 of 7 · Type & basics","Step 2 of 7 · Sub-meters","Step 3 of 7 · Official accounts","Step 4 of 7 · Main meters","Step 5 of 7 · Meter → house mapping","Step 6 of 7 · Maintenance charges","Step 7 of 7 · Splitting rules"];
-  let wStep=1;
-  function wizStart(){ wStep=1; wizRender(); go('scr-wiz'); }
-  function wizRender(){
-    for(let i=1;i<=7;i++) document.getElementById('w'+i).classList.toggle('hidden', i!==wStep);
-    document.getElementById('wizTag').textContent=wNames[wStep-1];
-    [...document.getElementById('wizDots').children].forEach((d,i)=>d.classList.toggle('done', i<wStep));
-    document.getElementById('wizBackBtn').style.visibility = wStep===1 ? 'hidden' : 'visible';
-    document.getElementById('wizNextBtn').textContent = wStep===7 ? 'Finish ✓' : 'Next →';
-  }
-  function wizNext(){
-    if(wStep<7){ wStep++; wizRender(); }
-    else { go('scr-properties'); toast('Property registered ✓'); }
-  }
-  function wizBack(){
-    if(wStep>1){ wStep--; wizRender(); } else go('scr-properties');
-  }
-  function chipSingle(el){
-    [...el.parentElement.children].forEach(c=>c.classList.remove('on'));
-    el.classList.add('on');
-  }
-  function ctab(which){
-    const b = which==='b';
-    document.getElementById('tabB').classList.toggle('on',b);
-    document.getElementById('tabH').classList.toggle('on',!b);
-    document.getElementById('cB').classList.toggle('hidden',!b);
-    document.getElementById('cH').classList.toggle('hidden',b);
-  }
+  return shell(`<h2 class="stitle">Collection</h2>${msel}<div style="height:8px"></div>${tabs}${body}`);
+}
+
+/* ================= SETTINGS (everything works) ================= */
+function vSet(){
+  return shell(`<h2 class="stitle">${T('set')}</h2>
+  <div class="card"><b>🎨 Appearance</b><div class="seg">
+    <button class="${S.theme==='dark'?'on':''}" onclick="S.theme='dark';render()">🌙 Dark</button>
+    <button class="${S.theme==='light'?'on':''}" onclick="S.theme='light';render()">☀️ Light</button></div></div>
+  <div class="card"><b>🌐 Language</b><div class="seg">
+    <button class="${S.lang==='en'?'on':''}" onclick="S.lang='en';render()">English</button>
+    <button class="${S.lang==='ur'?'on':''}" onclick="S.lang='ur';render()">اردو</button></div>
+    <div class="mut">Switches the app's main labels.</div></div>
+  <div class="card"><b>☁️ Sync</b><div class="mut">Last synced: ${S.lastSync||'never'}</div>
+    <button class="btn btn2" onclick="S.lastSync=new Date().toLocaleString();toast('Synced just now');render()">🔄 Sync now</button></div>
+  <div class="card"><b>💾 Data</b>
+    <button class="btn btn2" onclick="toast('Import runs in the full app (demo)')">📥 Import app data</button>
+    <button class="btn btn2" onclick="toast('Backup saved (demo)')">📤 Export / backup</button></div>
+  <div class="card"><b>📱 App</b>
+    <button class="btn btn2" onclick="toast('You have the latest version (demo)')">⬆️ Check for update</button>
+    <div class="kv" style="margin-top:8px"><span>Version</span><b>3.0 prototype v2</b></div></div>`);
+}
+
+/* ================= ROUTER ================= */
+function render(){const a=$('app');const sc=S.screen;
+  if(sc==='login')a.innerHTML=vLogin();
+  else if(sc==='signup')a.innerHTML=vSignup();
+  else if(sc==='wizard')a.innerHTML=vWizard();
+  else if(sc==='sheet')a.innerHTML=vSheet(S._p);
+  else if(sc==='bill')a.innerHTML=vBill(S._p);
+  else{if(S.tab==='home')a.innerHTML=vHome();else if(S.tab==='houses')a.innerHTML=vHouses();else if(S.tab==='coll')a.innerHTML=vColl();else a.innerHTML=vSet();}
+  document.body.classList.toggle('light',S.theme==='light');
+  window.scrollTo(0,0);
+}
+render();
 </script>
 </body>
 </html>
