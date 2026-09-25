@@ -39,6 +39,14 @@ label{font-size:13px;color:var(--mut);display:block;margin-top:12px}
 .stepdots span.done{background:var(--acc)}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#131b2b;border-top:1px solid #24314a;display:flex;padding:6px 4px calc(8px + env(safe-area-inset-bottom))}
 .nav button{flex:1;background:none;border:0;color:var(--mut);font-size:11px;padding:8px 2px;min-height:56px;cursor:pointer}
+.docsec{margin-top:14px}
+.doctitle{font-size:15px;font-weight:700;margin-bottom:2px}
+.docrow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #33415c;border-radius:14px;margin-top:8px;cursor:pointer;background:var(--card2);min-height:64px}
+.docrow.done{border-color:var(--acc);background:#16281f}
+.docico{width:46px;height:46px;min-width:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;background:#31405c}
+.docrow.done .docico{background:#1d3a2a}
+.docfile{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52vw}
+.docup{font-size:13px;font-weight:700;color:var(--acc);border:1.5px solid var(--acc);padding:9px 16px;border-radius:999px;white-space:nowrap}
 .nav button.on{color:var(--acc)}
 .nav button .ic{font-size:20px;display:block}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0c2b1a;border:1px solid var(--acc);color:var(--txt);padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;display:none;max-width:90%}
@@ -150,7 +158,7 @@ function wzNext(){
 function wzNextBtn(lbl){return `<button class="btn" onclick="wzNext()">${lbl||'Next →'}</button>`;}
 function flLbl(f){return f===0?'Ground (G)':'Floor '+f;}
 function flShort(f){return f===0?'G':'F'+f;}
-function flatHouses(){const w=S.wz,out=[];for(let f=0;f<=w.floors;f++){const fh=w.floorHouses[f]||{n:1,names:[]};const n=fh.n||1;for(let i=0;i<n;i++){out.push({floor:f,idx:i,code:(fh.names&&fh.names[i])||'',key:f+'-'+i});}}return out;}
+function flatHouses(){const w=S.wz,out=[];for(let f=0;f<=w.floors;f++){const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[]});const n=fh.n||1;fh.names=fh.names||[];for(let i=0;i<n;i++){if(!fh.names[i])fh.names[i]=autoName(f,i);out.push({floor:f,idx:i,code:fh.names[i],key:f+'-'+i});}}return out;}
 function autoName(f,i){const nn=String(i+1).padStart(2,'0'),w=S.wz,st=w.nameStyle||'num';
   if(f===0)return 'G-'+nn;
   if(st==='alpha')return 'ABCDEFGHIJ'[f-1]+'-'+nn;
@@ -186,7 +194,7 @@ function vWizard(){const w=S.wz;
     inner=`${wzDots(9,4)}<h2 class="stitle">Houses per floor</h2><div class="mut">Ground floor (G) first, then Floor 1, 2, … — just tell us <b>how many houses</b> are on each floor. If <b>you (the owner)</b> live in a house, mark it — it will be excluded from bills.</div>`+h;}
   if(w.step===5){const hs=flatHouses();let h='';
     hs.forEach((hh,i)=>{const m=w.houseMeters[i]||(w.houseMeters[i]={e:false,g:false,wt:false,eNo:'',gNo:'',wNo:''});
-    h+=`<div class="card"><b>${esc(hh.code||(flLbl(hh.floor)+' · House '+(hh.idx+1)))}</b>
+    h+=`<div class="card"><b>${esc(hh.code||autoName(hh.floor,hh.idx))}</b>
     <label>Electricity sub-meter installed?</label><div class="seg"><button class="${m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=true;render()">Yes</button><button class="${!m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=false;render()">No</button></div>
     ${m.e?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.eNo)}" placeholder="e.g. SN-45218" oninput="S.wz.houseMeters[${i}].eNo=this.value">`:''}
     <label>Gas sub-meter installed?</label><div class="seg"><button class="${m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=true;render()">Yes</button><button class="${!m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=false;render()">No</button></div>
@@ -287,8 +295,8 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <div class="row"><div class="grow"><label>Lease advance</label><input type="number" value="${h.advance}" oninput="H('${h.id}').advance=+this.value||0;updTotal('${h.id}')"></div>
   <div class="grow"><label>Prior dues (Rs)</label><input type="number" value="${h.priorDues}" oninput="H('${h.id}').priorDues=+this.value||0;updTotal('${h.id}')"></div></div>
   <label>Previous extra / credit (Rs) — negative = credit, e.g. -368</label><input type="number" value="${h.prevExtra}" oninput="H('${h.id}').prevExtra=+this.value||0;updTotal('${h.id}')">
-  <div class="row" style="margin-top:10px">${fileBtn(h.id,'agreement','📄 Agreement')}${fileBtn(h.id,'cnic','🪪 CNIC')}${fileBtn(h.id,'jobcard','🧰 Job Card')}</div>
-  <div class="chips">${['agreement','cnic','jobcard'].map(k=>{const f=h.files&&h.files[k];return f?`<span class="chip on">📎 ${k}: ${esc(f.name)}</span>`:'';}).join('')}</div>
+  <div class="docsec"><div class="doctitle">📁 Documents</div><div class="mut" style="margin:-2px 0 2px">Agreement, CNIC and job card — tap a row to upload a photo or PDF.</div>
+  ${docRow(h.id,'agreement','📄','Agreement')}${docRow(h.id,'cnic','🪪','CNIC')}${docRow(h.id,'jobcard','🧰','Job Card')}</div>
   <label style="margin-top:10px">This month's total (Rs) — auto-calculated, you can edit</label><input id="m_total" type="number" value="${(h.rent||0)+(h.priorDues||0)+(h.prevExtra||0)}">
   <div class="formula">= Rent + Prior dues + Prev extra · updates as you type above · advance tracked separately</div></div>
   ${h.owner?'<div class="note">🏠 Owner-occupied house — no bill is generated for this house, and it is excluded from splits.</div>':''}
@@ -303,7 +311,12 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <button class="btn" onclick="genBill('${h.id}')">🧾 Generate Bill</button>
   <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
 }
-function fileBtn(hid,kind,lbl){return `<button class="btn btn2" onclick="document.getElementById('f_${hid}_${kind}').click()">${lbl}</button><input type="file" id="f_${hid}_${kind}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${hid}','${kind}',this)">`;}
+function docRow(hid,kind,icon,lbl){const h=H(hid),f=h.files&&h.files[kind];
+return `<div class="docrow ${f?'done':''}" onclick="document.getElementById('f_${hid}_${kind}').click()">
+<div class="docico">${icon}</div><div class="grow"><b>${lbl}</b><div class="mut docfile">${f?'✓ '+esc(f.name):'Tap to upload (photo or PDF)'}</div></div>
+${f?`<button class="icobtn" onclick="event.stopPropagation();docDel('${hid}','${kind}')">✕</button>`:`<span class="docup">Upload</span>`}</div>
+<input type="file" id="f_${hid}_${kind}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${hid}','${kind}',this)">`;}
+function docDel(hid,kind){const h=H(hid);if(h.files)delete h.files[kind];render();}
 function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');render();}
 function fileChips(h,kind){const f=h.files&&h.files[kind];if(!f)return '';return `<div class="chips"><span class="chip on">📎 ${esc(f.name)}</span></div>`;}
 function updTotal(hid){const h=H(hid);const el=$('m_total');if(el)el.value=(+h.rent||0)+(+h.priorDues||0)+(+h.prevExtra||0);}
