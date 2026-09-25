@@ -47,6 +47,12 @@ label{font-size:13px;color:var(--mut);display:block;margin-top:12px}
 .docrow.done .docico{background:#1d3a2a}
 .docfile{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52vw}
 .docup{font-size:13px;font-weight:700;color:var(--acc);border:1.5px solid var(--acc);padding:9px 16px;border-radius:999px;white-space:nowrap}
+.docadd{display:flex;gap:8px;align-items:center}
+.docadd select{flex:1;margin-top:0;min-height:48px}
+.docbtn{width:auto!important;margin-top:0!important;white-space:nowrap;padding:13px 18px;min-height:48px}
+.docstat{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #2b3a55;font-size:14px}
+.docstat:last-child{border-bottom:0}
+.docstat.done .docfile{color:var(--acc)}
 .nav button.on{color:var(--acc)}
 .nav button .ic{font-size:20px;display:block}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0c2b1a;border:1px solid var(--acc);color:var(--txt);padding:12px 18px;border-radius:12px;font-size:14px;z-index:50;display:none;max-width:90%}
@@ -295,8 +301,10 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <div class="row"><div class="grow"><label>Lease advance</label><input type="number" value="${h.advance}" oninput="H('${h.id}').advance=+this.value||0;updTotal('${h.id}')"></div>
   <div class="grow"><label>Prior dues (Rs)</label><input type="number" value="${h.priorDues}" oninput="H('${h.id}').priorDues=+this.value||0;updTotal('${h.id}')"></div></div>
   <label>Previous extra / credit (Rs) — negative = credit, e.g. -368</label><input type="number" value="${h.prevExtra}" oninput="H('${h.id}').prevExtra=+this.value||0;updTotal('${h.id}')">
-  <div class="docsec"><div class="doctitle">📁 Documents</div><div class="mut" style="margin:-2px 0 2px">Agreement, CNIC and job card — tap a row to upload a photo or PDF.</div>
-  ${docRow(h.id,'agreement','📄','Agreement')}${docRow(h.id,'cnic','🪪','CNIC')}${docRow(h.id,'jobcard','🧰','Job Card')}</div>
+  <div class="docsec"><div class="doctitle">📁 Documents</div><div class="mut" style="margin:-2px 0 6px">Pick a document type, then attach its photo or PDF.</div>
+  <div class="docadd"><select id="dt_${h.id}">${DOCS.map(([k,ic,lbl])=>`<option value="${k}">${ic} ${lbl}</option>`).join('')}</select><button class="btn docbtn" onclick="document.getElementById('df_${h.id}').click()">📎 Attach</button></div>
+  <input type="file" id="df_${h.id}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${h.id}',document.getElementById('dt_${h.id}').value,this)">
+  ${DOCS.map(([k,ic,lbl])=>{const f=h.files&&h.files[k];return `<div class="docstat ${f?'done':''}"><span>${ic} <b>${lbl}</b></span><span class="mut docfile">${f?'✓ '+esc(f.name):'— not attached'}</span>${f?`<button class="icobtn" onclick="docDel('${h.id}','${k}')">✕</button>`:''}</div>`;}).join('')}</div>
   <label style="margin-top:10px">This month's total (Rs) — auto-calculated, you can edit</label><input id="m_total" type="number" value="${(h.rent||0)+(h.priorDues||0)+(h.prevExtra||0)}">
   <div class="formula">= Rent + Prior dues + Prev extra · updates as you type above · advance tracked separately</div></div>
   ${h.owner?'<div class="note">🏠 Owner-occupied house — no bill is generated for this house, and it is excluded from splits.</div>':''}
@@ -311,11 +319,7 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <button class="btn" onclick="genBill('${h.id}')">🧾 Generate Bill</button>
   <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
 }
-function docRow(hid,kind,icon,lbl){const h=H(hid),f=h.files&&h.files[kind];
-return `<div class="docrow ${f?'done':''}" onclick="document.getElementById('f_${hid}_${kind}').click()">
-<div class="docico">${icon}</div><div class="grow"><b>${lbl}</b><div class="mut docfile">${f?'✓ '+esc(f.name):'Tap to upload (photo or PDF)'}</div></div>
-${f?`<button class="icobtn" onclick="event.stopPropagation();docDel('${hid}','${kind}')">✕</button>`:`<span class="docup">Upload</span>`}</div>
-<input type="file" id="f_${hid}_${kind}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${hid}','${kind}',this)">`;}
+const DOCS=[['agreement','📄','Agreement'],['cnic','🪪','CNIC'],['jobcard','🧰','Job Card']];
 function docDel(hid,kind){const h=H(hid);if(h.files)delete h.files[kind];render();}
 function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');render();}
 function fileChips(h,kind){const f=h.files&&h.files[kind];if(!f)return '';return `<div class="chips"><span class="chip on">📎 ${esc(f.name)}</span></div>`;}
