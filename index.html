@@ -115,8 +115,7 @@ function enterApp(){S.screen='main';S.tab='home';render();}
 /* ---------- MAIN SHELL ---------- */
 function shell(inner){
   const nav=[['home','🏢',T('home')],['houses','🚪',T('houses')],['coll','🧾',T('coll')],['set','⚙️',T('set')]];
-  const gear=(S.screen==='main'&&S.tab==='set')?'':`<button class="icobtn" onclick="tab('set')" title="${T('set')}">⚙️</button>`;
-  return `<div class="hdr"><h1>${T('app')}</h1>${gear}</div>
+  return `<div class="hdr"><h1>${T('app')}</h1></div>
   <div class="body">${inner}</div>
   <div class="nav">${nav.map(n=>`<button class="${S.tab===n[0]?'on':''}" onclick="tab('${n[0]}')"><span class="ic">${n[1]}</span>${n[2]}</button>`).join('')}</div>`;
 }
@@ -138,7 +137,7 @@ function vHome(){
 </html>
 <script>
 /* ================= REGISTRATION WIZARD (9 steps, English labels) ================= */
-function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],motorMeter:{no:'',type:'none'},charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};go('wizard');}
+function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],motorMeter:{no:'',type:'none'},charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};render();}
 function wzDots(n,cur){let s='<div class="stepdots">';for(let i=1;i<=n;i++)s+=`<span class="${i<=cur?'done':''}"></span>`;return s+'</div>';}
 function wzBar(title,step){return `<div class="hdr"><button class="back" onclick="wzBack()">←</button><h1>${title}</h1><div class="mut">Step ${step}/9</div></div>`;}
 function wzBack(){if(S.wz.step>1){S.wz.step--;go('wizard');}else{tab('home');}}
@@ -154,11 +153,11 @@ function flatHouses(){const w=S.wz,out=[];for(let f=0;f<w.floors;f++){const fh=w
 function vWizard(){const w=S.wz;
   let inner='';
   if(w.step===1){inner=`${wzDots(9,1)}<h2 class="stitle">Property type</h2><div class="mut">What kind of property is this?</div>
-  <div class="seg">${['Apartment','Shop','Other'].map(t=>`<button class="${w.type===t?'on':''}" onclick="S.wz.type='${t}';go('wizard')">${t}</button>`).join('')}</div>`;}
+  <div class="seg">${['Apartment','Shop','Other'].map(t=>`<button class="${w.type===t?'on':''}" onclick="S.wz.type='${t}';render()">${t}</button>`).join('')}</div>`;}
   if(w.step===2){inner=`${wzDots(9,2)}<h2 class="stitle">Property name</h2><div class="mut">e.g. My Villa</div>
   <label>Property name</label><input id="w_name" value="${esc(w.name)}" placeholder="My Villa" oninput="S.wz.name=this.value">`;}
   if(w.step===3){inner=`${wzDots(9,3)}<h2 class="stitle">Floors</h2><div class="mut">How many floors does the building have? <b>Count the ground floor as Floor 1.</b></div>
-  <div class="stepper"><button onclick="S.wz.floors=Math.max(1,S.wz.floors-1);go('wizard')">−</button><div class="val">${w.floors}</div><button onclick="S.wz.floors=Math.min(10,S.wz.floors+1);go('wizard')">＋</button></div>`;}
+  <div class="stepper"><button onclick="S.wz.floors=Math.max(1,S.wz.floors-1);render()">−</button><div class="val">${w.floors}</div><button onclick="S.wz.floors=Math.min(10,S.wz.floors+1);render()">＋</button></div>`;}
   if(w.step===4){let h='';for(let f=0;f<w.floors;f++){const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[],owners:[]});const n=fh.n||1;
     h+=`<div class="card"><div class="row"><div class="grow"><b>Floor ${f+1}${f===0?' (Ground floor)':''}</b><div class="mut">Houses on this floor</div></div>
     <div class="stepper"><button onclick="wzFloorN(${f},-1)">−</button><div class="val">${n}</div><button onclick="wzFloorN(${f},1)">＋</button></div></div>`;
@@ -169,11 +168,11 @@ function vWizard(){const w=S.wz;
   if(w.step===5){const hs=flatHouses();let h='';
     hs.forEach((hh,i)=>{const m=w.houseMeters[i]||(w.houseMeters[i]={e:false,g:false,wt:false,eNo:'',gNo:'',wNo:''});
     h+=`<div class="card"><b>${esc(hh.code||('Floor '+hh.floor+' · House '+(hh.idx+1)))}</b>
-    <label>Electricity sub-meter installed?</label><div class="seg"><button class="${m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=true;go('wizard')">Yes</button><button class="${!m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=false;go('wizard')">No</button></div>
+    <label>Electricity sub-meter installed?</label><div class="seg"><button class="${m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=true;render()">Yes</button><button class="${!m.e?'on':''}" onclick="S.wz.houseMeters[${i}].e=false;render()">No</button></div>
     ${m.e?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.eNo)}" placeholder="e.g. SN-45218" oninput="S.wz.houseMeters[${i}].eNo=this.value">`:''}
-    <label>Gas sub-meter installed?</label><div class="seg"><button class="${m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=true;go('wizard')">Yes</button><button class="${!m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=false;go('wizard')">No</button></div>
+    <label>Gas sub-meter installed?</label><div class="seg"><button class="${m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=true;render()">Yes</button><button class="${!m.g?'on':''}" onclick="S.wz.houseMeters[${i}].g=false;render()">No</button></div>
     ${m.g?`<label>Printed sub-meter number (serial on the meter)</label><input value="${esc(m.gNo)}" placeholder="e.g. SN-77120" oninput="S.wz.houseMeters[${i}].gNo=this.value">`:''}
-    <label>Water sub-meter installed?</label><div class="seg"><button class="${m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=true;go('wizard')">Yes</button><button class="${!m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=false;go('wizard')">No</button></div>
+    <label>Water sub-meter installed?</label><div class="seg"><button class="${m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=true;render()">Yes</button><button class="${!m.wt?'on':''}" onclick="S.wz.houseMeters[${i}].wt=false;render()">No</button></div>
     ${m.wt?`<label>Printed water sub-meter number</label><input value="${esc(m.wNo)}" placeholder="e.g. W-31055" oninput="S.wz.houseMeters[${i}].wNo=this.value">`:''}</div>`;});
     inner=`${wzDots(9,5)}<h2 class="stitle">Sub-meters per house</h2><div class="mut">For every house: does it have its own sub-meter? Enter the printed serial number from the meter.</div>`+h;}
   if(w.step===6){const hs=flatHouses();
@@ -182,7 +181,7 @@ function vWizard(){const w=S.wz;
       <input value="${esc(m.no)}" placeholder="${ph}" oninput="S.wz['${key}'][${mi}].no=this.value">
       <label>Which house(s) does this meter serve? (tap all that share it)</label><div class="chips">
       ${hs.map((hh,hi)=>`<button class="chip ${m.houses.includes(hi)?'on':''}" onclick="wzMeterShare('${key}',${mi},${hi})">${esc(hh.code||('F'+hh.floor+'H'+(hh.idx+1)))}</button>`).join('')}</div></div>`;});
-    h+=`<button class="btn btn2" onclick="S.wz['${key}'].push({no:'',houses:[]});go('wizard')">＋ Add another meter</button></div>`;return h;};
+    h+=`<button class="btn btn2" onclick="S.wz['${key}'].push({no:'',houses:[]});render()">＋ Add another meter</button></div>`;return h;};
     inner=`${wzDots(9,6)}<h2 class="stitle">Official meters</h2>`+meterSec('⚡ KE account numbers','keMeters','e.g. 040012345678')+meterSec('🔥 SSGC customer numbers','gasMeters','e.g. 1234567890');}
   if(w.step===7){const CH=[['sec','Security charges'],['water','Water charges'],['maint','Maintenance'],['motor','Motor / common']];
     const VM={sec:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.']],
@@ -191,18 +190,18 @@ function vWizard(){const w=S.wz;
       motor:[['equal','Split equally per house','Total ÷ number of houses. Every house pays the same.'],['person','Per person (resident count)','Total ÷ all residents × this house\u2019s residents.']]};
     inner=`${wzDots(9,7)}<h2 class="stitle">Fixed / variable charges</h2><div class="mut">For each charge choose: none, a fixed monthly amount, or variable.</div>`+
     CH.map(([k,nm])=>{const c=w.charges[k];
-    return `<div class="card"><b>${nm}</b><div class="seg">${['none','fixed','variable'].map(m=>`<button class="${c.mode===m?'on':''}" onclick="S.wz.charges.${k}.mode='${m}';go('wizard')">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+    return `<div class="card"><b>${nm}</b><div class="seg">${['none','fixed','variable'].map(m=>`<button class="${c.mode===m?'on':''}" onclick="S.wz.charges.${k}.mode='${m}';render()">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}</div>
     ${c.mode==='fixed'?`<label>Fixed monthly amount (Rs)</label><input type="number" inputmode="numeric" value="${esc(c.amt)}" placeholder="e.g. 500" oninput="S.wz.charges.${k}.amt=this.value">`:''}
     ${c.mode==='variable'?`<label>If variable, how should the app calculate each house's share?</label>
       ${VM[k].map(([m,t,f])=>`
-      <div class="radio ${c.method===m?'on':''}" onclick="S.wz.charges.${k}.method='${m}';go('wizard')"><input type="radio" ${c.method===m?'checked':''}><div><b>${t}</b><div class="formula">${f}</div></div></div>`).join('')}`:''}</div>`;}).join('')
+      <div class="radio ${c.method===m?'on':''}" onclick="S.wz.charges.${k}.method='${m}';render()"><input type="radio" ${c.method===m?'checked':''}><div><b>${t}</b><div class="formula">${f}</div></div></div>`).join('')}`:''}</div>`;}).join('')
     +(w.charges.motor.mode!=='none'?`<div class="card"><b>🔌 Motor meter</b><div class="mut">Does the motor have its own meter? If yes, enter it.</div>
-      <div class="seg">${['none','sub','ke'].map(t=>`<button class="${w.motorMeter.type===t?'on':''}" onclick="S.wz.motorMeter.type='${t}';go('wizard')">${t==='none'?'No meter':t==='sub'?'Sub-meter':'KE account'}</button>`).join('')}</div>
+      <div class="seg">${['none','sub','ke'].map(t=>`<button class="${w.motorMeter.type===t?'on':''}" onclick="S.wz.motorMeter.type='${t}';render()">${t==='none'?'No meter':t==='sub'?'Sub-meter':'KE account'}</button>`).join('')}</div>
       ${w.motorMeter.type!=='none'?`<label>Motor meter number</label><input value="${esc(w.motorMeter.no)}" placeholder="${w.motorMeter.type==='ke'?'e.g. 040012345678':'e.g. SN-90210'}" oninput="S.wz.motorMeter.no=this.value">`:''}</div>`:`
       <div class="note">💡 Tip: enable the <b>Motor</b> charge above to record its meter.</div>`);}
   if(w.step===8){const ruleRow=(lbl,key)=>`<div class="card"><b>${lbl}</b>
     ${[['equal','Split equally per house'],['submeter','By sub-meter reading'],['person','Per person (resident count)']].map(([m,t])=>`
-    <div class="radio ${w[key]===m?'on':''}" onclick="S.wz.${key}='${m}';go('wizard')"><input type="radio" ${w[key]===m?'checked':''}><div><b>${t}</b></div></div>`).join('')}</div>`;
+    <div class="radio ${w[key]===m?'on':''}" onclick="S.wz.${key}='${m}';render()"><input type="radio" ${w[key]===m?'checked':''}><div><b>${t}</b></div></div>`).join('')}</div>`;
     inner=`${wzDots(9,8)}<h2 class="stitle">Bill split rules</h2>
     <div class="note">📌 These settings are <b>saved for this property</b> and applied <b>automatically every month</b> when you tap Generate Bill. The bill shows the full calculation so you can verify.</div>`
     +ruleRow('⚡ Electricity bill split','eRule')+ruleRow('🔥 Gas bill split','gRule');}
@@ -220,10 +219,10 @@ function vWizard(){const w=S.wz;
     <div class="mut">Houses: ${hs.map(h=>esc(h.code||('F'+h.floor+'H'+(h.idx+1)))).join(', ')}</div>`;}
   return `${wzBar('Register Property',w.step)}<div class="body">${inner}${wzNextBtn(w.step===9?'✓ Finish & Create Property':null)}</div>`;
 }
-function wzFloorN(f,d){const w=S.wz;const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[],owners:[]});fh.n=Math.min(8,Math.max(1,(fh.n||1)+d));go('wizard');}
-function wzOwner(f,i){const fh=S.wz.floorHouses[f];fh.owners=fh.owners||[];fh.owners[i]=!fh.owners[i];go('wizard');}
-function wzMeterDel(key,mi){S.wz[key].splice(mi,1);go('wizard');}
-function wzMeterShare(key,mi,hi){const a=S.wz[key][mi].houses;const i=a.indexOf(hi);if(i>=0)a.splice(i,1);else a.push(hi);go('wizard');}
+function wzFloorN(f,d){const w=S.wz;const fh=w.floorHouses[f]||(w.floorHouses[f]={n:1,names:[],owners:[]});fh.n=Math.min(8,Math.max(1,(fh.n||1)+d));render();}
+function wzOwner(f,i){const fh=S.wz.floorHouses[f];fh.owners=fh.owners||[];fh.owners[i]=!fh.owners[i];render();}
+function wzMeterDel(key,mi){S.wz[key].splice(mi,1);render();}
+function wzMeterShare(key,mi,hi){const a=S.wz[key][mi].houses;const i=a.indexOf(hi);if(i>=0)a.splice(i,1);else a.push(hi);render();}
 function finishWz(){const w=S.wz,hs=flatHouses();
   S.prop={name:w.name,type:w.type,floors:w.floors,keMeters:w.keMeters.filter(m=>m.no),gasMeters:w.gasMeters.filter(m=>m.no),motorMeter:w.motorMeter,charges:w.charges,eRule:w.eRule,gRule:w.gRule};
   S.houses=hs.map((h,i)=>{const m=w.houseMeters[i]||{};const ow=((w.floorHouses[h.floor-1]||{}).owners||[])[h.idx];
@@ -286,7 +285,7 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
 }
 function fileBtn(hid,kind,lbl){return `<button class="btn btn2" onclick="document.getElementById('f_${hid}_${kind}').click()">${lbl}</button><input type="file" id="f_${hid}_${kind}" style="display:none" accept="image/*,.pdf" onchange="attachFile('${hid}','${kind}',this)">`;}
-function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');go('sheet',hid);}
+function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');render();}
 function fileChips(h,kind){const f=h.files&&h.files[kind];if(!f)return '';return `<div class="chips"><span class="chip on">📎 ${esc(f.name)}</span></div>`;}
 function updTotal(hid){const h=H(hid);const el=$('m_total');if(el)el.value=(+h.rent||0)+(+h.priorDues||0)+(+h.prevExtra||0);}
 function sheetBar(t){return `<div class="hdr"><button class="back" onclick="tab('houses')">←</button><h1 style="font-size:15px">${esc(t)}</h1></div>`;}
@@ -422,7 +421,7 @@ function vSet(){
 }
 
 /* ================= ROUTER ================= */
-function render(){const a=$('app');const sc=S.screen;
+function render(){const a=$('app');const sc=S.screen;const y=window.scrollY;
   if(sc==='login')a.innerHTML=vLogin();
   else if(sc==='signup')a.innerHTML=vSignup();
   else if(sc==='wizard')a.innerHTML=vWizard();
@@ -430,7 +429,7 @@ function render(){const a=$('app');const sc=S.screen;
   else if(sc==='bill')a.innerHTML=vBill(S._p);
   else{if(S.tab==='home')a.innerHTML=vHome();else if(S.tab==='houses')a.innerHTML=vHouses();else if(S.tab==='coll')a.innerHTML=vColl();else a.innerHTML=vSet();}
   document.body.classList.toggle('light',S.theme==='light');
-  window.scrollTo(0,0);
+  window.scrollTo(0,y);
 }
 render();
 </script>
