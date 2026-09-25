@@ -137,7 +137,7 @@ function vHome(){
 </html>
 <script>
 /* ================= REGISTRATION WIZARD (9 steps, English labels) ================= */
-function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],motorMeter:{no:'',type:'none'},charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};render();}
+function startWz(){S.wz={step:1,type:'Apartment',name:'',floors:2,floorHouses:[],houseMeters:[],keMeters:[{no:'',houses:[]}],gasMeters:[{no:'',houses:[]}],motorMeter:{no:'',type:'none'},charges:{sec:{mode:'none',amt:'',method:'equal'},water:{mode:'none',amt:'',method:'equal'},maint:{mode:'none',amt:'',method:'equal'},motor:{mode:'none',amt:'',method:'equal'}},eRule:'submeter',gRule:'submeter'};go('wizard');}
 function wzDots(n,cur){let s='<div class="stepdots">';for(let i=1;i<=n;i++)s+=`<span class="${i<=cur?'done':''}"></span>`;return s+'</div>';}
 function wzBar(title,step){return `<div class="hdr"><button class="back" onclick="wzBack()">←</button><h1>${title}</h1><div class="mut">Step ${step}/9</div></div>`;}
 function wzBack(){if(S.wz.step>1){S.wz.step--;go('wizard');}else{tab('home');}}
