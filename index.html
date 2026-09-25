@@ -319,7 +319,7 @@ function vSheet(id){const h=H(id);if(!h)return shell('<p>House not found</p>');
   <button class="btn" onclick="genBill('${h.id}')">🧾 Generate Bill</button>
   <button class="btn btn2" onclick="tab('houses')">← Back to houses</button></div>`;
 }
-const DOCS=[['agreement','📄','Agreement'],['cnic','🪪','CNIC'],['jobcard','🧰','Job Card']];
+const DOCS=[['agreement','📄','Agreement'],['cnic','🆔','CNIC'],['jobcard','🧰','Job Card']];
 function docDel(hid,kind){const h=H(hid);if(h.files)delete h.files[kind];render();}
 function attachFile(hid,kind,input){const h=H(hid);const f=input.files&&input.files[0];if(!f)return;h.files=h.files||{};h.files[kind]={name:f.name,url:URL.createObjectURL(f)};toast('📎 '+f.name+' attached');render();}
 function fileChips(h,kind){const f=h.files&&h.files[kind];if(!f)return '';return `<div class="chips"><span class="chip on">📎 ${esc(f.name)}</span></div>`;}
